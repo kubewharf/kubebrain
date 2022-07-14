@@ -1,0 +1,19 @@
+storage  ,test_group,op    ,ops      ,latency_avg(ms),latency_p99(ms)
+KubeBrain,0         ,insert,15215.3,12.4           ,41
+KubeBrain,0         ,event ,15217.7  ,18.0           ,85
+KubeBrain,0         ,read  ,15213.1  ,7.92           ,35
+KubeBrain,1         ,insert,14801.0  ,12.1           ,50
+KubeBrain,1         ,event ,14890.5  ,186            ,85
+KubeBrain,1         ,read  ,14801.8  ,7.86           ,43
+KubeBrain,2         ,insert,17325.9  ,10.6           ,34
+KubeBrain,2         ,event ,17326.9  ,11.9           ,55
+KubeBrain,2         ,read  ,17347.8  ,11.9           ,24
+ETCD 3.4 ,0         ,insert,8599.8   ,14.8           ,42
+ETCD 3.4 ,0         ,events,8585.4   ,19.5           ,52
+ETCD 3.4 ,0         ,read  ,8599.8   ,13.8           ,43
+ETCD 3.4 ,1         ,insert,9087.9   ,14.0           ,43
+ETCD 3.4 ,1         ,events,9089.0   ,19.3           ,46
+ETCD 3.4 ,1         ,read  ,9105.2   ,18.4           ,57
+ETCD 3.4 ,2         ,insert,8514.3   ,15.1           ,46
+ETCD 3.4 ,2         ,events,8498.1   ,17.0           ,50
+ETCD 3.4 ,2         ,read  ,8514.8   ,19.3           ,59

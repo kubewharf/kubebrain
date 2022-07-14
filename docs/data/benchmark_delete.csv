@@ -1,0 +1,13 @@
+storage  ,test_group,op_count,op    ,ops    ,latency_avg(ms),latency_p99(ms)
+KubeBrain,0         ,300000  ,delete,4889.2 ,61.2           ,354
+KubeBrain,0         ,300000  ,event ,4888.5 ,95.7           ,497
+KubeBrain,1         ,300000  ,delete,4847.5 ,61.8           ,327
+KubeBrain,1         ,300000  ,event ,4846.8 ,96.0           ,453
+KubeBrain,2         ,300000  ,delete,5027.5 ,59.6           ,268
+KubeBrain,2         ,300000  ,event ,5000.4 ,87.6           ,360
+ETCD 3.4 ,0         ,300000  ,delete,10769.8,27.8           ,73
+ETCD 3.4 ,0         ,300000  ,events,10793.3,22.1           ,74
+ETCD 3.4 ,1         ,300000  ,delete,10857.5,27.6           ,76
+ETCD 3.4 ,1         ,300000  ,events,10855.5,42.8           ,82
+ETCD 3.4 ,2         ,300000  ,delete,11195.1,26.8           ,70
+ETCD 3.4 ,2         ,300000  ,events,11189.1,26.8           ,67
