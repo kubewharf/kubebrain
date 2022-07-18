@@ -45,10 +45,11 @@
 
 [Contributing](CONTRIBUTING.md)
 
+# 联系我们
+
+- Email: kubewharf.conduct@bytedance.com
+- Member: 请查看 [Maintainers](./MAINTAINER.md)
+
 # 开源许可
 
 KubeBrain基于[Apache License 2.0](LICENSE)许可证。
-
-# 联系我们
-
-- Email: [xuchen.xiaoying@bytedance.com](xuchen.xiaoying@bytedance.com)
