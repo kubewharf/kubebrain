@@ -14,7 +14,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/huandu/skiplist v1.1.0
 	github.com/kr/text v0.2.0 // indirect
-	github.com/kubewharf/kubebrain-client v0.2.0
+	github.com/kubewharf/kubebrain-client v0.2.1
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
@@ -44,7 +44,6 @@ require (
 )
 
 replace (
-	github.com/kubewharf/kubebrain-client => ../kubebrain-client
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
 	k8s.io/api => k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191004105649-b14e3c49469a

@@ -43,10 +43,12 @@ Please check [Contributing](CONTRIBUTING.md) for more details.
 
 Please check [Code of Conduct](CODE_OF_CONDUCT.md) for more details.
 
+## Community
+
+- Email: kubewharf.conduct@bytedance.com
+- Member: Please refer to [Maintainers](./MAINTAINER.md).
+
 ## License
 
 This project is licensed under the [Apache-2.0 License](LICENSE).
 
-## Community
-
-- Email: [xuchen.xiaoying@bytedance.com](xuchen.xiaoying@bytedance.com)
