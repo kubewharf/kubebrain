@@ -62,7 +62,7 @@ const (
 // test config
 const (
 	interval = 100 * time.Millisecond
-	timeout  = 1000 * time.Millisecond
+	timeout  = 5 * time.Second
 )
 
 // msg
@@ -389,6 +389,7 @@ func (ct *createTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if ct.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -431,6 +432,7 @@ func (dt *deleteTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if dt.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -599,6 +601,7 @@ func (ut *updateTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if ut.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -1428,6 +1431,25 @@ func TestBackend(t *testing.T) {
 
 func prefixEnd(p string) string {
 	return string(PrefixEnd([]byte(p)))
+}
+
+func waitUntilEventChanFilledOrTimeout(eventChan <-chan []*proto.Event) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		if len(eventChan) != 0 {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
 }
 
 func waitUntilRevisionEqualOrTimeout(b Backend, expectedRev uint64) {
