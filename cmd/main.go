@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/logs"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"github.com/kubewharf/kubebrain/cmd/option"
 	"github.com/kubewharf/kubebrain/cmd/version"
