@@ -212,18 +212,18 @@ func (w *watcher) List(ctx context.Context, id int64, r *etcdserverpb.WatchCreat
 	klog.InfoS("RANGE STREAM", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, "rev", r.StartRevision)
 	ch, err := w.backend.ListByStream(ctx, r.Key, r.RangeEnd, uint64(r.StartRevision*-1))
 	if err != nil {
-		klog.ErrorS(err, "list by stream failed", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, "rev", int64(r.StartRevision*-1))
+		klog.ErrorS(err, "list by stream failed", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, "rev", r.StartRevision*-1)
 		w.metricCli.EmitCounter("watch.backend.list_stream.err", 1)
 		w.Cancel(id, err, true)
 		return
 	}
 
 	for watchResponse := range ch {
-		revision := int64(r.StartRevision * -1)
+		revision := r.StartRevision * -1
 		// range stream eof, tell client range ends
 		// if has err, CancelReason is not nil
 		if watchResponse.Canceled == true {
-			klog.InfoS("receive cancel message", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, int64(r.StartRevision*-1))
+			klog.InfoS("receive cancel message", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, r.StartRevision*-1)
 			// indicates eof
 			revision = -1
 			// set err info in events
@@ -237,7 +237,7 @@ func (w *watcher) List(ctx context.Context, id int64, r *etcdserverpb.WatchCreat
 				},
 			}
 			w.metricCli.EmitCounter("watch.list_stream.eof", 1)
-			w.metricCli.EmitHistogram("watch.list_stream.latency", time.Now().Sub(startTime).Seconds())
+			w.metricCli.EmitHistogram("watch.list_stream.latency", time.Since(startTime).Seconds())
 		}
 
 		response := &etcdserverpb.WatchResponse{
@@ -250,7 +250,8 @@ func (w *watcher) List(ctx context.Context, id int64, r *etcdserverpb.WatchCreat
 		w.metricCli.EmitCounter("watch.list_stream.push", len(response.Events))
 		w.metricCli.EmitHistogram("watch.list_stream.push.size", response.Size())
 		if err := w.watchServer.Send(response); err != nil {
-			klog.ErrorS(err, "[range stream] send response with header failed", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, "rev", int64(r.StartRevision*-1), "respRev", revision)
+			klog.ErrorS(err, "[range stream] send response with header failed",
+				"watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, "rev", r.StartRevision*-1, "respRev", revision)
 			w.metricCli.EmitCounter("watch.list_stream.push.err", 1)
 			// send failed, should break
 			// TODO retry refer to etcd victims

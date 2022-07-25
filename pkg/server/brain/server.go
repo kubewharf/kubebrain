@@ -73,13 +73,13 @@ func (s *Server) compactLoop() {
 			startTime := time.Now()
 			s.backend.Compact(context.Background(), compactRevision)
 			s.metricCli.EmitGauge("leader.compact", compactRevision)
-			s.metricCli.EmitHistogram("leader.compact.latency", time.Now().Sub(startTime).Seconds())
+			s.metricCli.EmitHistogram("leader.compact.latency", time.Since(startTime).Seconds())
 		}
 	}
 }
 
 // emit metric and latency
-func (s *Server) emitMethodMetric(metricName string, method string, err error, latency time.Duration, ) {
+func (s *Server) emitMethodMetric(metricName string, method string, err error, latency time.Duration) {
 	methodTag := metrics.Tag("method", method)
 	successTag := metrics.Tag("err", strconv.FormatBool(err != nil))
 	s.metricCli.EmitCounter(metricName, 1, methodTag, successTag)

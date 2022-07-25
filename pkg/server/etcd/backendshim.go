@@ -222,7 +222,7 @@ func (b *backendShim) Compact(ctx context.Context, revision uint64) (*etcdserver
 					ResponseRange: &etcdserverpb.RangeResponse{
 						Header: &etcdserverpb.ResponseHeader{},
 						Kvs: []*mvccpb.KeyValue{
-							&mvccpb.KeyValue{},
+							{},
 						},
 						Count: 1,
 					},

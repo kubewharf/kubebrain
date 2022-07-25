@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/kubewharf/kubebrain/pkg/backend/common"
+	"github.com/kubewharf/kubebrain/pkg/backend/common"
 )
 
 type eventQueue struct {
@@ -34,7 +34,7 @@ func (e *eventQueue) size() int {
 	return e.queueSize
 }
 
-func (e *eventQueue) push(event *WatchEvent) {
+func (e *eventQueue) push(event *common.WatchEvent) {
 	node := newEventNode(event)
 
 	e.mu.Lock()
@@ -69,12 +69,12 @@ func (e *eventQueue) getHead() *eventNode {
 }
 
 type eventNode struct {
-	event *WatchEvent
+	event *common.WatchEvent
 	time  time.Time
 	next  *eventNode
 }
 
-func newEventNode(event *WatchEvent) *eventNode {
+func newEventNode(event *common.WatchEvent) *eventNode {
 	return &eventNode{
 		event: event,
 		time:  time.Now(),

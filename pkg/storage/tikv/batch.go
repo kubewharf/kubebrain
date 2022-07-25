@@ -57,7 +57,7 @@ func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
 			}
 			return errors.Wrapf(err, "fail to get key %s", string(key))
 		}
-		if bytes.Compare(oldVal, val) != 0 {
+		if !bytes.Equal(oldVal, val) {
 			return storage.NewErrConflict(idx, key, val)
 		}
 		err = b.txn.Set(key, newVal)
@@ -100,7 +100,7 @@ func (b *batch) DelCurrent(it storage.Iter) {
 			}
 			return errors.Wrapf(err, "fail to get key %s", string(key))
 		}
-		if bytes.Compare(oldVal, tiIter.iter.Value()) != 0 {
+		if !bytes.Equal(oldVal, tiIter.iter.Value()) {
 			return storage.NewErrConflict(idx, it.Key(), oldVal)
 		}
 		return b.txn.Delete(tiIter.iter.Key())

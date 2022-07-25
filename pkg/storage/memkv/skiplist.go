@@ -19,8 +19,9 @@ import (
 	"sync"
 	"time"
 
-	storage "github.com/kubewharf/kubebrain/pkg/storage"
 	"github.com/huandu/skiplist"
+
+	"github.com/kubewharf/kubebrain/pkg/storage"
 )
 
 var _ storage.KvStorage = &store{}

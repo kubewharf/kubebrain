@@ -72,6 +72,6 @@ func TestAdjustPartitionBorders(t *testing.T) {
 		t.Log()
 		t.Log(idx, string(p.Start))
 		t.Log(idx, string(p.End))
-		ast.True(bytes.Compare(p.Start, p.End) != 0)
+		ast.True(!bytes.Equal(p.Start, p.End))
 	}
 }

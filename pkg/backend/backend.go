@@ -25,7 +25,7 @@ import (
 	proto "github.com/kubewharf/kubebrain-client/api/v2rpc"
 
 	"github.com/kubewharf/kubebrain/pkg/backend/coder"
-	. "github.com/kubewharf/kubebrain/pkg/backend/common"
+	"github.com/kubewharf/kubebrain/pkg/backend/common"
 	"github.com/kubewharf/kubebrain/pkg/backend/creator"
 	"github.com/kubewharf/kubebrain/pkg/backend/election"
 	"github.com/kubewharf/kubebrain/pkg/backend/retry"
@@ -36,10 +36,9 @@ import (
 )
 
 const (
-	historyCapacity        = 200000 // TODO config from start option
-	writeEventChanCapacity = 100000
-	watchersChanCapacity   = 100000
-	eventBatchSize         = 300
+	historyCapacity      = 200000 // TODO config from start option
+	watchersChanCapacity = 100000
+	eventBatchSize       = 300
 )
 
 type Backend interface {
@@ -209,7 +208,8 @@ func (b *backend) collectStorageWriteEvents() {
 	for {
 		cnt := 0
 		for cnt < eventBatchSize {
-			watchEvent, ok := b.watchEventsRingBuffer[(b.GetCurrentRevision()+1)%watchersChanCapacity].Load().(*WatchEvent)
+			idx := (b.GetCurrentRevision() + 1) % watchersChanCapacity
+			watchEvent, ok := b.watchEventsRingBuffer[idx].Load().(*common.WatchEvent)
 			if !ok || watchEvent == nil {
 				if cnt == 0 {
 					// no event in inside loop, continue inside loop
@@ -219,7 +219,7 @@ func (b *backend) collectStorageWriteEvents() {
 				break
 			}
 			b.metricCli.EmitGauge("watch.set.current.revision", watchEvent.Revision)
-			b.watchEventsRingBuffer[watchEvent.Revision%watchersChanCapacity].Store((*WatchEvent)(nil))
+			b.watchEventsRingBuffer[watchEvent.Revision%watchersChanCapacity].Store((*common.WatchEvent)(nil))
 
 			// invalid watch event, i.e. cas failed
 			if !watchEvent.Valid {
@@ -282,6 +282,6 @@ func (b *backend) SetCurrentRevision(revision uint64) {
 
 func responseHeader(rev uint64) *proto.ResponseHeader {
 	return &proto.ResponseHeader{
-		Revision: uint64(rev),
+		Revision: rev,
 	}
 }
