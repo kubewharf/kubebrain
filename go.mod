@@ -38,9 +38,9 @@ require (
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v0.20.2
 	k8s.io/component-base v0.20.2
+	k8s.io/klog v0.3.0 // indirect
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kube-openapi v0.0.0-00010101000000-000000000000 // indirect
-	k8s.io/kubernetes v0.0.0-00010101000000-000000000000
 )
 
 replace (
@@ -54,7 +54,6 @@ replace (
 	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191002184608-9779a9fba520
 	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20191016015547-9213b55ba309
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
-	k8s.io/kubernetes => k8s.io/kubernetes v1.14.8
 	k8s.io/metrics => k8s.io/metrics v0.0.0-20191004105854-2e8cf7d0888c
 	k8s.io/utils => k8s.io/utils v0.0.0-20200327001022-6496210b90e8
 )
