@@ -27,16 +27,14 @@ tiup playground --mode tikv-slim --kv 1 --pd 1
 make tikv
 ./bin/kube-brain --key-prefix "/" --pd-addr=127.0.0.1:2379 --port=3379 --peer-port=3380 --compatible-with-etcd=true
 ```
-make tikv
-./bin/kube-brain --key-prefix "/" --pd-addr=127.0.0.1:2379 --port=3379 --peer-port=3380
 When multiple KubeBrain share a tikv cluster
 - `key-prefix` is consistent with the etcd-prefixparameter of the apiserver corresponding to the apiserver.
-- `compatible-with-etcd` should set true to make all node 
+- `compatible-with-etcd` should set true to make all nodes provide all etcd APIs used in apiserver 
 
 ## APIServer
 
 ### Use the Community Version of APIServer
-The community version of the APIServer storage only supports the API of etcd3, and KubeBrain is compatible with the API of etc3 used in the community version of APIServer, but this method does not take full advantage of KubeBrain.
+The community version of the APIServer storage only supports the API of etcd3, and KubeBrain is compatible with the API of etcd3 used in the community version of APIServer, but this method does not take full advantage of KubeBrain.
 ```shell
 ./kube-apiserver  /
   # ...
