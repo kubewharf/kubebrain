@@ -26,7 +26,7 @@ func TestCompatible(t *testing.T) {
 	c := NewNormalCoder()
 
 	uk, rev, err := c.Decode(bs)
-	ast.Equal("/registry/test",string(uk))
+	ast.Equal("/registry/test", string(uk))
 	ast.Equal(0, int(rev))
 	ast.NoError(err)
 }

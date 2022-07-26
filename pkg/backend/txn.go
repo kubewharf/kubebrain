@@ -25,7 +25,7 @@ import (
 
 	proto "github.com/kubewharf/kubebrain-client/api/v2rpc"
 
-	. "github.com/kubewharf/kubebrain/pkg/backend/common"
+	"github.com/kubewharf/kubebrain/pkg/backend/common"
 	"github.com/kubewharf/kubebrain/pkg/storage"
 )
 
@@ -38,7 +38,7 @@ func (b *backend) Create(ctx context.Context, put *proto.CreateRequest) (resp *p
 			"valSize", len(put.GetValue()),
 			"result", resp.GetSucceeded(),
 			"respRev", resp.GetHeader().GetRevision(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	revision, err := b.create(ctx, put.Key, put.Value)
@@ -82,10 +82,10 @@ func (b *backend) Delete(ctx context.Context, r *proto.DeleteRequest) (resp *pro
 			"rev", r.GetRevision(),
 			"result", resp.GetSucceeded(),
 			"respRev", resp.GetHeader().GetRevision(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
-	rev, old, err := b.delete(ctx, uint64(r.Revision), r.Key)
+	rev, old, err := b.delete(ctx, r.Revision, r.Key)
 
 	b.notify(ctx, r.Key, old.Val, rev, old.Revision, err == nil, proto.Event_DELETE, err)
 
@@ -127,7 +127,7 @@ func (b *backend) Delete(ctx context.Context, r *proto.DeleteRequest) (resp *pro
 	resp.Kv = &proto.KeyValue{
 		Key:      old.Key,
 		Value:    old.Val,
-		Revision: uint64(old.Revision),
+		Revision: old.Revision,
 	}
 	return resp, nil
 }
@@ -186,7 +186,7 @@ func (b *backend) Update(ctx context.Context, r *proto.UpdateRequest) (resp *pro
 			"rev", r.GetKv().Revision,
 			"respRev", resp.GetHeader().GetRevision(),
 			"result", resp.GetSucceeded(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	var (
@@ -198,10 +198,10 @@ func (b *backend) Update(ctx context.Context, r *proto.UpdateRequest) (resp *pro
 	var curRev uint64
 	if prevRev == 0 {
 		curRev, err = b.create(ctx, key, value)
-		b.notify(ctx, key, value, curRev, uint64(prevRev), err == nil, proto.Event_CREATE, err)
+		b.notify(ctx, key, value, curRev, prevRev, err == nil, proto.Event_CREATE, err)
 	} else {
-		curRev, err = b.update(ctx, uint64(prevRev), key, value, lease)
-		b.notify(ctx, key, value, curRev, uint64(prevRev), err == nil, proto.Event_PUT, err)
+		curRev, err = b.update(ctx, prevRev, key, value, lease)
+		b.notify(ctx, key, value, curRev, prevRev, err == nil, proto.Event_PUT, err)
 	}
 
 	resp = &proto.UpdateResponse{
@@ -218,7 +218,7 @@ func (b *backend) Update(ctx context.Context, r *proto.UpdateRequest) (resp *pro
 			}
 			return nil, err
 		}
-		resp.Header.Revision = maxUint64(uint64(resp.Header.Revision), modRevision)
+		resp.Header.Revision = maxUint64(resp.Header.Revision, modRevision)
 		resp.Kv = &proto.KeyValue{
 			Key:      key,
 			Value:    val,
@@ -253,7 +253,7 @@ func (b *backend) update(ctx context.Context, oldRevision uint64, key []byte, va
 func (b *backend) notify(ctx context.Context,
 	key []byte, val []byte, revision, preRevision uint64, valid bool, eventType proto.Event_EventType, err error) {
 	// todo: abstract as an individual component
-	watchEvent := &WatchEvent{
+	watchEvent := &common.WatchEvent{
 		Revision:     revision,
 		PrevRevision: preRevision,
 		Valid:        valid,

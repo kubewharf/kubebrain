@@ -124,7 +124,7 @@ func (r *revisionSyncer) getRevisionFromLeader() (uint64, error) {
 
 	// todo: implement it based on grpc API
 	response, err := http.Get(fmt.Sprintf("%s://%s/status", r.schema, leaderAddress))
-	r.metricCli.EmitHistogram("member.round_trip", time.Now().Sub(startTime).Milliseconds(), metrics.Tag("leader", leaderAddress))
+	r.metricCli.EmitHistogram("member.round_trip", time.Since(startTime).Milliseconds(), metrics.Tag("leader", leaderAddress))
 	if err != nil {
 		r.metricCli.EmitCounter("follower.get.revision.err", 1, metrics.Tag("leader", leaderAddress))
 		return 0, err

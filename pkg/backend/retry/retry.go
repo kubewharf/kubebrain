@@ -170,7 +170,7 @@ func (a *asyncFifoRetryImpl) retry(ctx context.Context) (breakLoop bool) {
 	state := retrySuccess
 	defer func() {
 		// emit retry metrics
-		a.metrics.EmitHistogram("async_retry.retry", time.Now().Sub(start).Seconds(),
+		a.metrics.EmitHistogram("async_retry.retry", time.Since(start).Seconds(),
 			state, getRetryMethod(node.event.ResourceVerb))
 	}()
 

@@ -32,7 +32,7 @@ import (
 )
 
 func main() {
-	command := NewKubeWharfCommand()
+	command := NewKubeBrainCommand()
 
 	logs.InitLogs()
 	defer logs.FlushLogs()
@@ -47,12 +47,12 @@ func main() {
 	return
 }
 
-// NewKubeWharfCommand creates a *cobra.Command object with default parameters
-func NewKubeWharfCommand() *cobra.Command {
+// NewKubeBrainCommand creates a *cobra.Command object with default parameters
+func NewKubeBrainCommand() *cobra.Command {
 	o := option.NewOptions()
 	cmd := &cobra.Command{
-		Use:  "kube-wharf",
-		Long: `KubeWharf is a new metadata storage backend for Kubernetes better than etcd`,
+		Use:  "kube-brain",
+		Long: `KubeBrain is a new metadata storage backend for Kubernetes better than etcd`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			printFlags(cmd.Flags())
 			if err := o.Validate(); err != nil {

@@ -21,7 +21,6 @@ import (
 	"io"
 	"path"
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -62,7 +61,7 @@ const (
 // test config
 const (
 	interval = 100 * time.Millisecond
-	timeout  = 1000 * time.Millisecond
+	timeout  = 5 * time.Second
 )
 
 // msg
@@ -87,11 +86,6 @@ var (
 		"metrics-wrapper": metricsWrapper,
 	}
 )
-
-func init() {
-	if runtime.GOOS == `darwin` {
-	}
-}
 
 func checkSkip(t *testing.T) {
 	for _, exp := range skippedTests {
@@ -179,6 +173,7 @@ func newTestRefactorTiKVStorage(ast *assert.Assertions) storage.KvStorage {
 	ast.NoError(err)
 	testutils.BootstrapWithMultiRegions(cluster)
 	store, err := tikv.NewTestTiKVStore(rpcClient, pdClient, nil, nil, 0)
+	ast.NoError(err)
 	return itikv.NewKvStoreWithStorage([]*tikv.KVStore{store})
 }
 
@@ -248,19 +243,9 @@ func newLimitedRangeResponse(revision uint64, count int64, kvs ...*proto.KeyValu
 
 func newCountResponse(revision uint64, count int64) *proto.CountResponse {
 	return &proto.CountResponse{
-		Header: responseHeader(uint64(revision)),
+		Header: responseHeader(revision),
 		Count:  uint64(count),
 	}
-}
-
-func newPartitionResponse(revision int64, kvs ...*proto.KeyValue) *proto.ListPartitionResponse {
-	response := &proto.ListPartitionResponse{
-		PartitionNum: int64(len(kvs)),
-	}
-	for _, kv := range kvs {
-		response.PartitionKeys = append(response.PartitionKeys, kv.Key)
-	}
-	return response
 }
 
 func newDelResponse(revision uint64, succeeded bool, kv *proto.KeyValue) *proto.DeleteResponse {
@@ -302,13 +287,6 @@ func newDelRequest(revision uint64, key string) *proto.DeleteRequest {
 	return &proto.DeleteRequest{
 		Key:      []byte(key),
 		Revision: revision,
-	}
-}
-
-func newPartitionRequest(key string, rangeEnd string) *proto.ListPartitionRequest {
-	return &proto.ListPartitionRequest{
-		Key: []byte(key),
-		End: []byte(rangeEnd),
 	}
 }
 
@@ -389,6 +367,7 @@ func (ct *createTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if ct.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -431,6 +410,7 @@ func (dt *deleteTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if dt.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -599,6 +579,7 @@ func (ut *updateTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 		// sleep for a while and then check watcher
 		waitUntilRevisionEqualOrTimeout(backend, resp.GetHeader().GetRevision())
 		if ut.expectedEvent != nil {
+			waitUntilEventChanFilledOrTimeout(output)
 			if !ast.Equal(1, len(output), expectAEvent) {
 				ast.FailNow(noExpectedEvent)
 			}
@@ -940,7 +921,7 @@ func testBackendCompact(t *testing.T, targetStorage storageType) {
 			Kv: &proto.KeyValue{
 				Key:      []byte(testKey),
 				Value:    []byte(newVal),
-				Revision: uint64(rev1),
+				Revision: rev1,
 			},
 			Lease: 0,
 		})
@@ -1428,6 +1409,25 @@ func TestBackend(t *testing.T) {
 
 func prefixEnd(p string) string {
 	return string(PrefixEnd([]byte(p)))
+}
+
+func waitUntilEventChanFilledOrTimeout(eventChan <-chan []*proto.Event) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		if len(eventChan) != 0 {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
 }
 
 func waitUntilRevisionEqualOrTimeout(b Backend, expectedRev uint64) {

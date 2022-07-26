@@ -114,5 +114,5 @@ func (r *Ring) FindEvents(revision uint64) (ret *FindRet) {
 	}
 	copy(ret.events, r.arr[r.index(r.s+int64(idx)):])
 	copy(ret.events[r.l-r.index(r.s+int64(idx)):], r.arr[:r.index(r.e)])
-	return
+	return ret
 }

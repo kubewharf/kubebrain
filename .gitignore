@@ -4,3 +4,4 @@
 output
 bin
 kube*
+coverage.out

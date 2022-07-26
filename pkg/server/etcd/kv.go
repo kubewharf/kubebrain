@@ -68,7 +68,7 @@ func (s *RPCServer) Range(ctx context.Context, r *etcdserverpb.RangeRequest) (*e
 	}
 	successTag = getSuccessMetricTagByErr(err)
 	s.metricCli.EmitCounter("read", 1, methodTag, successTag)
-	s.metricCli.EmitHistogram("read.latency", time.Now().Sub(startTime).Seconds(), methodTag, successTag)
+	s.metricCli.EmitHistogram("read.latency", time.Since(startTime).Seconds(), methodTag, successTag)
 	if response != nil {
 		s.metricCli.EmitHistogram("read.responsesize", response.Size(), methodTag, successTag)
 	}
@@ -128,7 +128,7 @@ func (s *RPCServer) Txn(ctx context.Context, txn *etcdserverpb.TxnRequest) (*etc
 	// emit metric
 	successTag = getSuccessMetricTagByErr(err)
 	s.metricCli.EmitCounter("write", 1, methodTag, successTag)
-	s.metricCli.EmitHistogram("write.latency", time.Now().Sub(startTime).Seconds(), methodTag, successTag)
+	s.metricCli.EmitHistogram("write.latency", time.Since(startTime).Seconds(), methodTag, successTag)
 	if response != nil {
 		s.metricCli.EmitHistogram("write.responsesize", response.Size(), methodTag, successTag)
 		if !response.Succeeded {
@@ -232,7 +232,7 @@ func (s *RPCServer) compact() (*etcdserverpb.TxnResponse, error) {
 					ResponseRange: &etcdserverpb.RangeResponse{
 						Header: &etcdserverpb.ResponseHeader{},
 						Kvs: []*mvccpb.KeyValue{
-							&mvccpb.KeyValue{},
+							{},
 						},
 						Count: 1,
 					},

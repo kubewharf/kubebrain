@@ -40,7 +40,7 @@ randomly generated 512 Bytes, with a concurrent output load of 300 etcd clients.
 ### Insert & Read
 
 [Detailed Data](./data/benchmark_rw.csv)
-![table](./images/benchmark_table_graph/benchmark_workload_ir_throughput.png)
+![table](./images/benchmark_table_graph/benchmark_workload_rw_throughput.png)
 
 ### Delete
 

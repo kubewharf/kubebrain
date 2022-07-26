@@ -39,11 +39,11 @@ func (b *backend) Get(ctx context.Context, r *proto.GetRequest) (resp *proto.Get
 			"rev", r.GetRevision(),
 			"respRev", resp.GetHeader().GetRevision(),
 			"respSize", resp.Size(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	curRev := b.tso.GetRevision()
-	requireRev := uint64(r.GetRevision())
+	requireRev := r.GetRevision()
 
 	val, modRev, err := b.get(ctx, r.Key, requireRev)
 	if err == storage.ErrKeyNotFound {
@@ -66,7 +66,7 @@ func (b *backend) Get(ctx context.Context, r *proto.GetRequest) (resp *proto.Get
 		resp.Kv = &proto.KeyValue{
 			Key:      r.Key,
 			Value:    val,
-			Revision: uint64(modRev),
+			Revision: modRev,
 		}
 	}
 
@@ -125,14 +125,14 @@ func (b *backend) List(ctx context.Context, r *proto.RangeRequest) (resp *proto.
 			"limit", r.GetLimit(),
 			"respCount", len(resp.GetKvs()),
 			"respSize", resp.Size(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	if len(r.End) == 0 {
 		return nil, fmt.Errorf("invalid nil end field in RangeRequest")
 	}
 
-	reqRevision := uint64(r.Revision)
+	reqRevision := r.Revision
 	curRevision := b.tso.GetRevision()
 	if reqRevision == 0 {
 		reqRevision = curRevision
@@ -175,7 +175,7 @@ func (b *backend) Count(ctx context.Context, r *proto.CountRequest) (resp *proto
 			"start", Key(r.GetKey()),
 			"end", Key(r.GetEnd()),
 			"respCount", resp.GetCount(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	rev := b.tso.GetRevision()
@@ -206,7 +206,7 @@ func (b *backend) GetPartitions(ctx context.Context, r *proto.ListPartitionReque
 			"start", Key(r.GetKey()),
 			"end", Key(r.GetEnd()),
 			"respCount", resp.GetPartitionNum(),
-			"latency", time.Now().Sub(ts))
+			"latency", time.Since(ts))
 	}()
 
 	rev := b.tso.GetRevision()

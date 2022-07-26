@@ -38,7 +38,7 @@
 ### 数据读写混合
 
 [详细数据](./data/benchmark_rw.csv)
-![table](./images/benchmark_table_graph/benchmark_workload_ir_throughput.png)
+![table](./images/benchmark_table_graph/benchmark_workload_rw_throughput.png)
 
 ### 数据删除
 

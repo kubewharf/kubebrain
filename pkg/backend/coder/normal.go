@@ -56,7 +56,7 @@ func (n *normalEncoderDecoder) EncodeRevisionKey(key []byte) []byte {
 
 // Decode implements Coder interface
 func (n *normalEncoderDecoder) Decode(internalKey []byte) (userKey []byte, revision uint64, err error) {
-	if bytes.Compare(internalKey[:len(magicBytes)], magicBytes) != 0 {
+	if !bytes.Equal(internalKey[:len(magicBytes)], magicBytes) {
 		return nil, 0, errors.Errorf("magic number not right for object key %v", hex.EncodeToString(internalKey))
 	}
 
