@@ -162,7 +162,7 @@ func (r *scanner) getTimeoutRevision() uint64 {
 	prev := &compactRecord{}
 	head := r.compactHistories.head()
 	for head != nil {
-		interval := time.Now().Sub(head.time)
+		interval := time.Since(head.time)
 		klog.InfoS("check compact history", "interval", interval.String(), "rev", head.revision)
 		if interval < r.config.TTL {
 			break
@@ -299,7 +299,7 @@ func (r *scanner) scan(ctx context.Context, start []byte, end []byte, revision u
 		forkedReceiver.close()
 	}
 
-	klog.InfoS("scan", "start", start, "end", end, "count", globalCount, "latency", time.Now().Sub(startTime))
+	klog.InfoS("scan", "start", start, "end", end, "count", globalCount, "latency", time.Since(startTime))
 	return int(globalCount), nil
 }
 
@@ -418,7 +418,7 @@ func (w *worker) run(ctx context.Context, receiver resultReceiver) (int, error) 
 		case <-ctx.Done():
 			klog.InfoS("context canceled when worker scan",
 				"partitionsIdx", w.idx, "start", string(w.partition.Start), "end", string(w.partition.End), "compact", w.compact)
-			return 0, fmt.Errorf("worker run context cancelled")
+			return 0, fmt.Errorf("worker run context canceled")
 		default:
 		}
 

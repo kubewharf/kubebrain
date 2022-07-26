@@ -210,7 +210,7 @@ func (e *etcdProxy) Txn(ctx context.Context, txn *etcdserverpb.TxnRequest) (*etc
 	if !resp.GetSucceeded() {
 		getResp := (*clientv3.GetResponse)(resp.Responses[0].GetResponseRange())
 		klog.InfoS("forward txn cas failed",
-			"key", string(key),
+			"key", key,
 			"result", resp.GetSucceeded(),
 			"rev", rev,
 			"respRev", resp.GetHeader().GetRevision(),
@@ -218,7 +218,7 @@ func (e *etcdProxy) Txn(ctx context.Context, txn *etcdserverpb.TxnRequest) (*etc
 		)
 	}
 
-	return (*etcdserverpb.TxnResponse)(resp), err
+	return resp, err
 }
 
 func (e *etcdProxy) Ready() error {

@@ -76,10 +76,6 @@ func PrefixEnd(prefix []byte) []byte {
 	return noPrefixEnd
 }
 
-func unsupported(field string) error {
-	return fmt.Errorf("%s is unsupported", field)
-}
-
 func uint64ToBytes(n uint64) []byte {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, n)

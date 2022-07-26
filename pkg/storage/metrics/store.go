@@ -16,10 +16,11 @@ package metrics
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/kubewharf/kubebrain/pkg/metrics"
 	"github.com/kubewharf/kubebrain/pkg/storage"
@@ -60,7 +61,7 @@ func (s *storeWrapper) time(f func() error, opTag metrics.T) {
 	start := time.Now()
 	err := f()
 	stateTag := genStateTag(err)
-	duSec := time.Now().Sub(start).Seconds()
+	duSec := time.Since(start).Seconds()
 	_ = s.metricsCli.EmitHistogram(methodKey, duSec, stateTag, opTag)
 }
 
@@ -162,7 +163,7 @@ func (i *iterWrapper) Close() (err error) {
 	err = i.Iter.Close()
 
 	// emit metrics
-	duSumSec := time.Now().Sub(i.start).Seconds()
+	duSumSec := time.Since(i.start).Seconds()
 	duAvgSec := float64(0)
 	if i.counter != 0 {
 		duAvgSec = duSumSec / float64(i.counter)
@@ -223,7 +224,7 @@ func (b *batchWriteWrapper) DelCurrent(it storage.Iter) {
 func (b *batchWriteWrapper) Commit(ctx context.Context) (err error) {
 	err = b.BatchWrite.Commit(ctx)
 	stateTag := genStateTag(err)
-	duSumSec := time.Now().Sub(b.start).Milliseconds()
+	duSumSec := time.Since(b.start).Milliseconds()
 	_ = b.m.EmitHistogram("storage.batch.count", b.counter, batchTag, stateTag)
 	_ = b.m.EmitHistogram("storage.batch.duration", duSumSec, batchTag, stateTag)
 	return

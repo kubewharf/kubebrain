@@ -26,10 +26,6 @@ import (
 	storagetikv "github.com/kubewharf/kubebrain/pkg/storage/tikv"
 )
 
-const (
-	clientSize = 200
-)
-
 type storageConfig struct {
 	pdAddrs []string
 }

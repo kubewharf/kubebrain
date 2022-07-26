@@ -50,12 +50,6 @@ func (b *backend) Watch(ctx context.Context, prefix string, revision uint64) (<-
 	result := make(chan []*proto.Event, resultChanLength)
 
 	// include the current revision in list
-	if revision < 0 {
-		cancel()
-		klog.Errorf("revision < 0, close chan %v", readChan)
-		return nil, fmt.Errorf("invalid revision, revision is %d", revision)
-	}
-
 	if revision == 0 {
 		go b.processEvents(cancel, result, readChan, prefix, revision)
 		return result, nil
@@ -64,7 +58,7 @@ func (b *backend) Watch(ctx context.Context, prefix string, revision uint64) (<-
 	ret := b.watchCache.FindEvents(revision)
 
 	if ret.empty {
-		if uint64(revision) > b.tso.GetRevision() {
+		if revision > b.tso.GetRevision() {
 			// watch revision is latest, no need to fetch history
 			go b.processEvents(cancel, result, readChan, prefix, revision)
 			return result, nil
