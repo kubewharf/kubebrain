@@ -46,7 +46,7 @@ var VersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "show version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("KubeWharf")
+		fmt.Println("KubeBrain")
 		fmt.Println("Version:   \t", Version)
 		fmt.Println("Storage:   \t", Storage)
 		fmt.Println("Git SHA:   \t", GitSHA)
