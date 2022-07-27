@@ -22,9 +22,10 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/logs"
-	utilflag "k8s.io/kubernetes/pkg/util/flag"
+	"k8s.io/klog/v2"
 
 	"github.com/kubewharf/kubebrain/cmd/option"
 	"github.com/kubewharf/kubebrain/cmd/version"
@@ -53,7 +54,7 @@ func NewKubeBrainCommand() *cobra.Command {
 		Use:  "kube-brain",
 		Long: `KubeBrain is a new metadata storage backend for Kubernetes better than etcd`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			utilflag.PrintFlags(cmd.Flags())
+			printFlags(cmd.Flags())
 			if err := o.Validate(); err != nil {
 				return err
 			}
@@ -67,4 +68,10 @@ func NewKubeBrainCommand() *cobra.Command {
 
 	cmd.AddCommand(version.VersionCmd)
 	return cmd
+}
+
+func printFlags(flags *pflag.FlagSet) {
+	flags.VisitAll(func(flag *pflag.Flag) {
+		klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
+	})
 }

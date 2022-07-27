@@ -27,11 +27,9 @@ require (
 	github.com/tikv/client-go/v2 v2.0.1
 	go.etcd.io/etcd/api/v3 v3.5.2
 	go.etcd.io/etcd/client/v3 v3.5.2
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	google.golang.org/grpc v1.43.0
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.20.4 // indirect
@@ -40,10 +38,10 @@ require (
 	k8s.io/component-base v0.20.2
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kube-openapi v0.0.0-00010101000000-000000000000 // indirect
-	k8s.io/kubernetes v0.0.0-00010101000000-000000000000
 )
 
 replace (
+	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.3.1
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
 	k8s.io/api => k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191004105649-b14e3c49469a
