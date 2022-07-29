@@ -20,7 +20,7 @@ The project is generally divided into several parts:
     - Watch hub: Responsible for the generation, caching, and distribution of events;
     - Retry queue: Asynchronous retry queue. For the small number of operations that return non-deterministic errors, it guarantees final consistency through asynchronous retry corrections;
 - KV Storage Interface: The abstracted KV storage engine interface;
-- KV Storage Adaptor: Implementation of the KV storage engine for the storage interface, with built-in badger and TiKv implementation.
+- KV Storage Adaptor: Implementation of the KV storage engine for the storage interface, with built-in badger and TiKV implementation.
 
 ### Data Model
 
