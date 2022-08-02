@@ -3,7 +3,9 @@
 ## 项目概览
 
 KubeBrain整体抽象了键值数据库的接口，在此基础上实现了API Server的storage接口，为K8S提供集群元数据存储服务。
-![project_overview](images/project_overview.png)
+<p align="center">
+  <img height="670" width="640" src="images/project_overview.png">
+</p>
 
 ## 内部架构
 

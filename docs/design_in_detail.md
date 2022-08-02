@@ -3,7 +3,11 @@
 ## Overview
 
 KubeBrain abstracts the interface of the key-value database as a storage engine, and implements the storage interface of API Server on this basis to provide cluster metadata storage service for K8s.
-![project_overview](images/project_overview.png)
+
+<p align="center">
+  <img height="670" width="640" src="images/project_overview.png">
+</p>
+
 
 ## Internal Struct
 
