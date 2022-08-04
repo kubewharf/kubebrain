@@ -26,7 +26,7 @@ tiup playground --mode tikv-slim --kv 1 --pd 1
 
 ```shell
 make tikv
-./bin/kube-brain --key-prefix "/" --pd-addr=127.0.0.1:2379 --port=3379 --peer-port=3380 --compatible-with-etcd=true
+./bin/kube-brain --key-prefix "/" --pd-addrs=127.0.0.1:2379 --port=3379 --peer-port=3380 --compatible-with-etcd=true
 ```
 多个KubeBrain共用一个tikv集群时，注意配置
 - `key-prefix`参数和apiserver对应的apiserver的`etcd-prefix`参数保持一致
