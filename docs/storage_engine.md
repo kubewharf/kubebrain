@@ -7,7 +7,8 @@ Currently, we have the following feature requirements for the storage engine:
 - Support bidirectional traversal;
 - Supports read-write transactions or write transactions with CAS function;
 - Expose logic clock.
-  The following levels of transaction assurance are required for the storage engine:
+
+The following levels of transaction assurance are required for the storage engine:
 - Isolation Guarantee: Snapshot Isolation;
 - Session Guarantee: Linearizable.
 
