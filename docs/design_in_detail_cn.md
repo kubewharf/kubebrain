@@ -181,4 +181,4 @@ KubeBrain内置的TTL机制作为Compact机制的一个组成而存在。KubeBra
 
 **为什么不基于binlog实现事件监听机制？**
 
-首先binlog并不是一个分布式kv数据库都具备的特性，另外对于分布式kv数据库来说，通常开启binlog极大地增加写入延迟，降低系统吞吐，在K8S体系中元数据变更时产生的event是用来增量更新cache的，当KubeBrain节点崩溃、内存event丢失时，可以通过API Server将重新通过list watch重新同步cache，可以容忍有一些事件丢失，当然，后续项目会在这方面进行持续优化
+首先binlog并不是一个分布式 KV 数据库都具备的特性，另外对于分布式 KV 数据库来说，通常开启 binlog 极大地增加写入延迟，降低系统吞吐，在 K8S 体系中元数据变更时产生的 event 是用来增量更新 cache 的，当 KubeBrain 节点崩溃、内存 event 丢失时，可以通过 API Server 将重新 list watch 同步 cache，因此，可以容忍有一些事件丢失； 当然，后续 kubebrain 会在这方面持续优化。

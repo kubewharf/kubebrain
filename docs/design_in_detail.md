@@ -28,7 +28,7 @@ The project is generally divided into several parts:
 
 ### Data Model
 
-Similar to etcd, KubeBrain introduces revision for version management. KubeBrain will encode the raw key input by the API Server to two types of internal keys and write them to the storage engine index and data. 
+Similar to etcd, KubeBrain introduces revision for version management. KubeBrain will encode the raw key input by the API Server to two types of internal keys and write them to the storage engine index and data.
 
 For each key, the index revision key has only one record. The latest version number of the current raw key is also a lock, and each update operation to the raw key requires CAS on the index.
 
@@ -39,7 +39,7 @@ There are one or more data records of object key, and each data records the hist
 - `revision` is the logical sequence number of operations given by sequence number assigner of leader.
 
 >According to the Kubernetes checksum rules, raw_key only contains lowercase letters, numbers, '-' and '.', so currently the split_key is the $.
-  
+
 In particular, the revision key is encoded in the same way as the object key, with the revision taking empty bytes of constant length 8. This encoding scheme ensures that the comparison relationship between pre- and post-encoding remains unchanged.
 
 ![internal_key_format](images/internal_key_format.png)
@@ -54,7 +54,7 @@ This encoding method has the following advantages:
 
 ### Sequence Number Assigner
 
-KubeBrain uses revisions to manage versions of keys, each revision is a uint64 number. When assigning revisions, it is necessary to ensure that the revisions are monotonically incremented globally. Generating timestamps in a stand-alone database is simple, and using atomically self-incrementing integers can assign version numbers with high performance. 
+KubeBrain uses revisions to manage versions of keys, each revision is a uint64 number. When assigning revisions, it is necessary to ensure that the revisions are monotonically incremented globally. Generating timestamps in a stand-alone database is simple, and using atomically self-incrementing integers can assign version numbers with high performance.
 
 To avoid single point problems, KubeBrain is a distributed, master-slave storage. Considering scenarios such as restarting and leader changing, we should ensure that the "global monotonic incrementing" is still valid. After starting, the sequence number assigner is on the master node and initializes by reading the logical clock of the storage engine.
 
@@ -62,7 +62,7 @@ At present, the sequence number assigner of KubeBrain only takes effect on the m
 
 ### Write
 
-Each write operation will be assigned a unique write ID by the sequence number assigner. When creating, updating, and deleting Kubernetes object data, it is necessary to operate the index and data corresponding to the object at the same time. Since the index and data are different key-value pairs in the underlying storage engine, it is necessary to use write transactions to ensure the atomicity of the update process, which requires at least snapshot isolation. 
+Each write operation will be assigned a unique write ID by the sequence number assigner. When creating, updating, and deleting Kubernetes object data, it is necessary to operate the index and data corresponding to the object at the same time. Since the index and data are different key-value pairs in the underlying storage engine, it is necessary to use write transactions to ensure the atomicity of the update process, which requires at least snapshot isolation.
 
 At the same time, KubeBrain implements optimistic locking for concurrency control based on index. So in the process of write transactions, we first check the index revision key, update the index revision key after the check is done, and finally insert the data object key. The basic transaction flow is shown in the following code block：
 
@@ -115,7 +115,7 @@ The range query needs to specify the ReadRevision of the read operation. For the
 
 ## Event
 
-For all change operations, a continuous and unique revision will be allocated by the TSO. After the change operation is written to the database, regardless of whether the write succeeds or fails, the changes will be submitted to the RingBuffer in memory in the order of revision from small to large. The components of the tuple include `(type，revision, key, value, result)`. 
+For all change operations, a continuous and unique revision will be allocated by the TSO. After the change operation is written to the database, regardless of whether the write succeeds or fails, the changes will be submitted to the RingBuffer in memory in the order of revision from small to large. The components of the tuple include `(type，revision, key, value, result)`.
 
 In the tuple ring buffer, from the starting point to the end point, the revisions in all tuple data are strictly incremented, and the difference between adjacent revisions is 1.
 
@@ -164,7 +164,7 @@ The TTL mechanism for specific types of resources is supported in KubeBrain, and
 There are two ways to implement TTL in KubeBrain:
 - For storage engines that support Key, Value, and TTL, KubeBrain will sink TTL into the storage engine for implementation, which can reduce GC operations and read amplification.
 - For storage engines that do not support Key, Value, and TTL, KubeBrain provides a built-in TTL mechanism.
-  
+
 The built-in TTL mechanism of KubeBrain exists as a component of the "Compact" mechanism. The KubeBrain's master node will regularly scan all the data in the storage engine, and delete the old  Revision data without destroying the consistency, so as to avoid the unlimited growth of the data in the storage engine.
 - Before each start of "Compact", the KubeBrain's master node records the history of physical clock "TimeStamp" and logical clock "Revision", and saves them in memory as the query basis for whether revision times out
 - When executing “Compact”, the history records of previous “Compact" records will be checked from memory. According to the latest history records, where the difference between the "TimeStamp" in the history and the current "TimeStamp" is greater than the fixed TTL, the corresponding "Revision" will be recorded as "TTLRevision". And the previous history records will be deleted. When scanning the key, for the key that conforms to a specific pattern:
@@ -174,4 +174,4 @@ The built-in TTL mechanism of KubeBrain exists as a component of the "Compact" m
 
 **Why not implement the event mechanism based on binlog？**
 
-First of all, binlog is not a feature that all distributed kv databases must have. For distributed kv databases, enabling binlog will greatly increase write latency and reduces system throughput. In the K8s system, the event generated when the metadata is changed is used to incrementally update the cache. When the KubeBrain node crashes and the memory event is lost, the cache can be resynchronized through the list watch through the API Server, which can tolerate some event loss. Of course, subsequent projects will continue to optimize in this regard.
+First of all, binlog is not a feature that all distributed KV databases must have. For distributed KV databases, enabling binlog will greatly increase write latency and reduces system throughput. In the K8s system, the event generated when the metadata is changed is used to incrementally update the cache. When the KubeBrain node crashes and the memory event is lost, the cache can be resynchronized through the list watch through the API Server, which can tolerate some event loss. Of course, subsequent projects will continue to optimize in this regard.
