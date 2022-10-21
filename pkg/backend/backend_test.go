@@ -46,6 +46,7 @@ import (
 	ibadger "github.com/kubewharf/kubebrain/pkg/storage/badger"
 	imemkv "github.com/kubewharf/kubebrain/pkg/storage/memkv"
 	imetrics "github.com/kubewharf/kubebrain/pkg/storage/metrics"
+	imysql "github.com/kubewharf/kubebrain/pkg/storage/mysql"
 	itikv "github.com/kubewharf/kubebrain/pkg/storage/tikv"
 )
 
@@ -56,6 +57,7 @@ const (
 	tiKvStorage
 	badgerStorage
 	metricsWrapper
+	mysqlStorage
 )
 
 // test config
@@ -80,10 +82,11 @@ var (
 		".*/range/native/count.*", // todo: release Count later
 	}
 	storages = map[string]storageType{
-		"memKv": memKvStorage,
-		"tiKv":  tiKvStorage,
+		//"memKv": memKvStorage,
+		//"tiKv":  tiKvStorage,
 		//"badger":          badgerStorage,
-		"metrics-wrapper": metricsWrapper,
+		//"metrics-wrapper": metricsWrapper,
+		"mysql":           mysqlStorage,
 	}
 )
 
@@ -153,6 +156,8 @@ func newTestKvStorage(t *testing.T, ast *assert.Assertions, st storageType, m me
 		return newBadgerStorage(t, ast)
 	case metricsWrapper:
 		return imetrics.NewKvStorage(newBadgerStorage(t, ast), m)
+	case mysqlStorage:
+		return newTestMysqlStorage(ast)
 	default:
 		ast.FailNow("invalid storage")
 		return nil
@@ -175,6 +180,18 @@ func newTestRefactorTiKVStorage(ast *assert.Assertions) storage.KvStorage {
 	store, err := tikv.NewTestTiKVStore(rpcClient, pdClient, nil, nil, 0)
 	ast.NoError(err)
 	return itikv.NewKvStoreWithStorage([]*tikv.KVStore{store})
+}
+
+func newTestMysqlStorage(ast *assert.Assertions) storage.KvStorage {
+	store, err := imysql.NewKvStorage(imysql.Config{
+		UserName: "root",
+		Password: "",
+		URL:      "127.0.0.1:4000",
+		DBName:   "test",
+		Debug:    true,
+	})
+	ast.NoError(err)
+	return store
 }
 
 func newEvent(eventType proto.Event_EventType, rev uint64, cur *proto.KeyValue) *proto.Event {

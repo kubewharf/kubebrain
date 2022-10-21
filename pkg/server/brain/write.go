@@ -37,7 +37,7 @@ func (s *Server) Create(ctx context.Context, createRequest *proto.CreateRequest)
 	if ok && start.Sub(deadline) >= 0 {
 		return nil, context.DeadlineExceeded
 	}
-	ctx, cancel := context.WithTimeout(ctx, unaryRpcTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), unaryRpcTimeout)
 	defer cancel()
 
 	if err := s.checkLeaderWrite(); err != nil {
@@ -64,7 +64,7 @@ func (s *Server) Update(ctx context.Context, updateRequest *proto.UpdateRequest)
 	if ok && start.Sub(deadline) >= 0 {
 		return nil, context.DeadlineExceeded
 	}
-	ctx, cancel := context.WithTimeout(ctx, unaryRpcTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), unaryRpcTimeout)
 	defer cancel()
 
 	if err := s.checkLeaderWrite(); err != nil {
@@ -91,7 +91,7 @@ func (s *Server) Delete(ctx context.Context, deleteRequest *proto.DeleteRequest)
 	if ok && start.Sub(deadline) >= 0 {
 		return nil, context.DeadlineExceeded
 	}
-	ctx, cancel := context.WithTimeout(ctx, unaryRpcTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), unaryRpcTimeout)
 	defer cancel()
 
 	if err := s.checkLeaderWrite(); err != nil {

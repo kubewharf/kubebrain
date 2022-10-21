@@ -169,6 +169,10 @@ func NewBackend(kv storage.KvStorage, config Config, metricCli metrics.Metrics) 
 	}
 	b.asyncFifoRetry = retry.NewAsyncFifoRetry(b.coder, b.kv, b.metricCli, b.tso, b.getLatestInternalVal, b.notify, asyncRetryConfig)
 
+	if storage.NonsupportTSO(kv) {
+		b.tso = tso.NewLocalTSO(kv, config.Prefix)
+	}
+
 	// TODO stop chan
 	// write into watch chan, trigger by create/ update/ delete method in storage interface
 	go b.collectStorageWriteEvents()
