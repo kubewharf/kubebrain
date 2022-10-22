@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"io"
+	"k8s.io/klog/v2"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -42,20 +43,31 @@ func (i *iter) init(ctx context.Context) (err error) {
 	db := i.db.WithContext(ctx).
 		Model(&KV{})
 
-	if bytes.Compare(i.start, i.end) > 0 {
+	cmp := bytes.Compare(i.startKV.UserKey, i.endKV.UserKey)
+	if cmp == 0 {
+		start, end := i.startKV.Rev, i.endKV.Rev
+		if start > end {
+			start, end = end, start
+		}
+		db = db.Where("user_key = ?", i.startKV.UserKey).
+			Where("rev >= ?", start).
+			Where("rev <= ?", end).
+			//Where("rev BETWEEN ? AND ?", start, end).
+			Order("user_key desc, rev desc")
+	} else if cmp > 0 {
 		db = db.
-			Where("key <= ?", i.startKV.Key).
-			Where("rev <= ?", i.startKV.Rev).
-			Where("key >= ?", i.endKV.Key).
-			Where("rev >= ?", i.endKV.Rev).
-			Order("key desc, rev desc")
+			Where("user_key < ?", i.startKV.UserKey).
+			Where("user_key > ?", i.endKV.UserKey).
+			Or("user_key = ? AND rev <= ?", i.startKV.UserKey, i.startKV.Rev).
+			Or("user_key = ? AND rev >= ?", i.endKV.UserKey, i.endKV.Rev).
+			Order("user_key desc, rev desc")
 	} else {
 		db = db.
-			Where("key <= ?", i.endKV.Key).
-			Where("rev <= ?", i.endKV.Rev).
-			Where("key >= ?", i.startKV.Key).
-			Where("rev >= ?", i.startKV.Rev).
-			Order("key, rev")
+			Where("user_key < ?", i.endKV.UserKey).
+			Where("user_key > ?", i.startKV.UserKey).
+			Or("user_key = ? AND rev <= ?", i.endKV.UserKey, i.endKV.Rev).
+			Or("user_key = ? AND rev >= ?", i.startKV.UserKey, i.startKV.Rev).
+			Order("user_key, rev")
 	}
 
 	if i.limit != 0 {
@@ -75,6 +87,13 @@ func (i *iter) Val() []byte {
 
 func (i *iter) Next(ctx context.Context) (err error) {
 	if i.rows.Next() {
+		kv := &KV{}
+		err = i.db.ScanRows(i.rows, kv)
+		if err != nil {
+			return errors.Wrap(err, "failed to Scan")
+		}
+		klog.InfoS("cur", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
+		i.current = kv
 		return nil
 	}
 	return io.EOF

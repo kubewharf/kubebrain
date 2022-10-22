@@ -86,7 +86,7 @@ var (
 		//"tiKv":  tiKvStorage,
 		//"badger":          badgerStorage,
 		//"metrics-wrapper": metricsWrapper,
-		"mysql":           mysqlStorage,
+		"mysql": mysqlStorage,
 	}
 )
 
@@ -1083,12 +1083,12 @@ func testBackendResourceLock(t *testing.T, targetStorage storageType) {
 		RetryPeriod:     interval,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				fmt.Println("start")
+				klog.InfoS("start")
 				atomic.AddInt64(&startLeadingCounter, 1)
 				wg.Done()
 			},
 			OnStoppedLeading: func() {
-				fmt.Println("stop")
+				klog.InfoS("stop")
 				atomic.AddInt64(&stopLeadingCounter, 1)
 				wg.Done()
 			},

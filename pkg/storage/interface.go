@@ -118,7 +118,7 @@ type BatchWrite interface {
 //             // come to the end
 //          }
 //      }
-//      key, value := iter.Key(), iter.Val()
+//      key, value := iter.UserKey(), iter.Val()
 //      // processing ...
 //   }
 //

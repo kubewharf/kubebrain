@@ -144,7 +144,7 @@ func (r *resourceLock) Create(ler resourcelock.LeaderElectionRecord) error {
 // Update implements resourcelock.Interface
 func (r *resourceLock) Update(ler resourcelock.LeaderElectionRecord) error {
 	klog.V(8).Info("[resource lock] update lock")
-	if r.tso == 0 {
+	if r.tso == 0 && !storage.NonsupportTSO(r.store) {
 		return errors.New("endpoint not initialized, call get or create first")
 	}
 

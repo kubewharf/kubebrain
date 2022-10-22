@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	tsoKey        = "tso"
-	timeout       = 500 * time.Millisecond
-	maxRetryTimes = 10
-	retryInterVal = 500 * time.Millisecond
+	tsoKey            = "tso"
+	timeout           = 500 * time.Millisecond
+	maxRetryTimes     = 10
+	retryInterVal     = 500 * time.Millisecond
+	defaultBufferSzie = 5000
 )
 
 type TsoObject struct {
@@ -27,8 +28,10 @@ type TsoObject struct {
 
 func NewLocalTSO(storage storage.KvStorage, prefix string) TSO {
 	return &localTSO{
-		storage: storage,
-		tsoKey:  []byte(path.Join(prefix, tsoKey)),
+		storage:    storage,
+		tsoKey:     []byte(path.Join(prefix, tsoKey)),
+		tsoObject:  &TsoObject{},
+		bufferSize: defaultBufferSzie,
 	}
 }
 
@@ -126,7 +129,7 @@ func (l *localTSO) adjustAllocateBufferSize() {
 		return
 	}
 
-	l.bufferSize = l.prevDealRevision - dealRevision
+	l.bufferSize = (l.prevDealRevision - dealRevision) * 2
 	return
 }
 
@@ -162,22 +165,24 @@ func (l *localTSO) GetRevision() (maxCommittedRevision uint64) {
 
 // Deal implement TSO interface
 func (l *localTSO) Deal() (revision uint64, err error) {
-
+	klog.InfoS("deal")
 	var prevRev, maxRev uint64
 
 	f := func() bool {
+
+		klog.InfoS("prev", "rev", prevRev)
 		prevRev = atomic.LoadUint64(&l.dealRevision)
 		maxRev = atomic.LoadUint64(&l.committedRevision)
 		if prevRev == maxRev {
 			l.mustAllocateBuffer()
 		}
-		return atomic.CompareAndSwapUint64(&l.dealRevision, prevRev, prevRev+1)
+		return !atomic.CompareAndSwapUint64(&l.dealRevision, prevRev, prevRev+1)
 	}
 	// loop until success
 	// assume it will not conflict too often
 	for f() {
 	}
-
+	klog.InfoS("deal", "rev", prevRev+1)
 	return prevRev + 1, nil
 }
 

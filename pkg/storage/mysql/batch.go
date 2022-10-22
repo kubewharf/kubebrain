@@ -27,6 +27,7 @@ func (b *batch) error() error {
 }
 
 func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
+	idx := len(b.fs)
 	f := func() {
 		kv, _ := decode(key)
 		b.db.First(kv)
@@ -36,7 +37,7 @@ func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
 		}
 
 		if len(kv.Val) != 0 {
-			b.err = storage.ErrKeyDuplicated
+			b.err = storage.NewErrConflict(idx, key, kv.Val)
 			return
 		}
 		kv, _ = decode(key)
@@ -48,21 +49,23 @@ func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
 }
 
 func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
+	idx := len(b.fs)
 	f := func() {
 		kv, _ := decode(key)
-		b.db.First(kv)
+		b.db.Where("rev = ?", kv.Rev).First(kv)
 
 		if b.error() != nil {
 			return
 		}
-
+		klog.InfoS("cur", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
 		if bytes.Compare(kv.Val, oldVal) != 0 {
-			b.err = storage.ErrCASFailed
+			b.err = storage.NewErrConflict(idx, key, kv.Val)
+			return
 		}
 
 		kv, _ = decode(key)
 		kv.Val = newVal
-		b.db.Updates(kv)
+		b.db.Where("rev = ?", kv.Rev).Updates(kv)
 	}
 	b.fs = append(b.fs, f)
 }
@@ -78,6 +81,7 @@ func (b *batch) Put(key []byte, val []byte, ttl int64) {
 	f := func() {
 		kv, _ := decode(key)
 		kv.Val = val
+		klog.InfoS("put", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
 		b.db.Create(kv)
 	}
 
@@ -103,9 +107,12 @@ func (b *batch) DelCurrent(it storage.Iter) {
 }
 
 func (b *batch) Commit(ctx context.Context) error {
-	b.db = b.db.WithContext(ctx)
+	b.db = b.db.WithContext(ctx).Begin()
+	klog.Infof("batch %p txn start", b)
+	defer func() {
+		klog.Infof("batch %p txn end", b)
+	}()
 	for _, f := range b.fs {
-
 		f()
 
 		if b.error() != nil {
@@ -114,5 +121,7 @@ func (b *batch) Commit(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	b.db.Commit()
+
+	return b.error()
 }

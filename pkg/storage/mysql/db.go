@@ -3,12 +3,12 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"github.com/kubewharf/kubebrain/pkg/backend/coder"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
+	"github.com/kubewharf/kubebrain/pkg/backend/coder"
 	"github.com/kubewharf/kubebrain/pkg/storage"
 )
 
@@ -66,7 +66,7 @@ func (s *store) getClient(ctx context.Context) *gorm.DB {
 }
 
 func (s *store) GetTimestampOracle(ctx context.Context) (timestamp uint64, err error) {
-	return 0, storage.ErrUnsupported
+	return 0, nil
 }
 
 func (s *store) GetPartitions(ctx context.Context, start, end []byte) (partitions []storage.Partition, err error) {
@@ -80,7 +80,7 @@ func (s *store) GetPartitions(ctx context.Context, start, end []byte) (partition
 
 func (s *store) Get(ctx context.Context, key []byte) (val []byte, err error) {
 	kv, _ := decode(key)
-	err = s.getClient(ctx).First(kv).Error
+	err = s.getClient(ctx).Where("rev = ?", kv.Rev).First(kv).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, storage.ErrKeyNotFound
@@ -133,9 +133,9 @@ func (s *store) Close() error {
 }
 
 type KV struct {
-	Key []byte `gorm:"primaryKey;type:VARCHAR(512)"`
-	Rev uint64 `grom:"primaryKey"`
-	Val []byte `gorm:"type:LONGBLOB"`
+	UserKey []byte `gorm:"primaryKey;type:VARCHAR(512)"`
+	Rev     uint64 `gorm:"primaryKey"`
+	Val     []byte `gorm:"type:LONGBLOB"`
 }
 
 var (
@@ -144,13 +144,13 @@ var (
 
 func decode(internalKey []byte) (kv *KV, err error) {
 	kv = &KV{}
-	kv.Key, kv.Rev, err = defaultCoder.Decode(internalKey)
+	kv.UserKey, kv.Rev, err = defaultCoder.Decode(internalKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "can not decode key")
+		kv.UserKey = internalKey
 	}
 	return kv, nil
 }
 
 func encode(kv *KV) []byte {
-	return defaultCoder.EncodeObjectKey(kv.Key, kv.Rev)
+	return defaultCoder.EncodeObjectKey(kv.UserKey, kv.Rev)
 }
