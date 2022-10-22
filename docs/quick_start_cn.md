@@ -47,8 +47,73 @@ tiup playground
 
 ```shell
 make mysql
-./bin/kube-brain --key-prefix "/test" --port=3379 --peer-port=3380 --db-name "mysql"
+./bin/kube-brain --key-prefix "/registry" --port=3379 --peer-port=3380 --db-name "mysql"
 ```
+
+#### 使用 kind 拉起 kubernetes 测试集群
+
+##### 安装 kind
+```GO111MODULE="on" go get sigs.k8s.io/kind@v0.16.0```
+
+##### 配置 kind 集群参数
+替换 ip 为 kubebrain 的 ip
+```
+cat > cluster.yaml << EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+kubeadmConfigPatches:
+- |
+  apiVersion: kubeadm.k8s.io/v1beta3
+  kind: ClusterConfiguration
+  apiServer:
+    extraArgs:
+      etcd-servers: "http://ip:3379"
+      etcd-cafile: ""
+      etcd-certfile: ""
+      etcd-keyfile: ""
+EOF
+```
+
+启动集群
+```
+ kind create cluster --name=brain --config=./cluster.yaml
+```
+
+```
+cat > nginx.yaml << EOF
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 3 # tells deployment to run 1 pods matching the template
+  template: # create pods using pod definition in this template
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+EOF
+
+kubectl create -f nginx.yaml
+
+kubectl get pods
+
+```
+
+
 
 
 ## APIServer
