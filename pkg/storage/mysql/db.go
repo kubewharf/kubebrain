@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"github.com/kubewharf/kubebrain/pkg/backend/coder"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
@@ -78,7 +79,7 @@ func (s *store) GetPartitions(ctx context.Context, start, end []byte) (partition
 }
 
 func (s *store) Get(ctx context.Context, key []byte) (val []byte, err error) {
-	kv := &KV{InternalKey: key}
+	kv, _ := decode(key)
 	err = s.getClient(ctx).First(kv).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -106,7 +107,8 @@ func (s *store) BeginBatchWrite() storage.BatchWrite {
 }
 
 func (s *store) Del(ctx context.Context, key []byte) (err error) {
-	err = s.db.Delete(&KV{InternalKey: key}).Error
+	kv, _ := decode(key)
+	err = s.db.Delete(kv).Error
 	if err != nil {
 		return errors.Wrap(err, "failed to delete")
 	}
@@ -114,7 +116,8 @@ func (s *store) Del(ctx context.Context, key []byte) (err error) {
 }
 
 func (s *store) DelCurrent(ctx context.Context, iter storage.Iter) (err error) {
-	err = s.db.Where("val = ?", iter.Val()).Delete(&KV{InternalKey: iter.Key()}).Error
+	kv, _ := decode(iter.Key())
+	err = s.db.Where("val = ?", iter.Val()).Delete(kv).Error
 	if err != nil {
 		return errors.Wrap(err, "failed to delete")
 	}
@@ -130,6 +133,24 @@ func (s *store) Close() error {
 }
 
 type KV struct {
-	InternalKey []byte `gorm:"primaryKey;type:VARCHAR(512)"`
-	Val         []byte `gorm:"type:LONGBLOB"`
+	Key []byte `gorm:"primaryKey;type:VARCHAR(512)"`
+	Rev uint64 `grom:"primaryKey"`
+	Val []byte `gorm:"type:LONGBLOB"`
+}
+
+var (
+	defaultCoder = coder.NewNormalCoder()
+)
+
+func decode(internalKey []byte) (kv *KV, err error) {
+	kv = &KV{}
+	kv.Key, kv.Rev, err = defaultCoder.Decode(internalKey)
+	if err != nil {
+		return nil, errors.Wrap(err, "can not decode key")
+	}
+	return kv, nil
+}
+
+func encode(kv *KV) []byte {
+	return defaultCoder.EncodeObjectKey(kv.Key, kv.Rev)
 }

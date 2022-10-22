@@ -28,9 +28,7 @@ func (b *batch) error() error {
 
 func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
 	f := func() {
-		kv := &KV{
-			InternalKey: key,
-		}
+		kv, _ := decode(key)
 		b.db.First(kv)
 
 		if b.error() != nil {
@@ -39,8 +37,9 @@ func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
 
 		if len(kv.Val) != 0 {
 			b.err = storage.ErrKeyDuplicated
+			return
 		}
-		kv.InternalKey = key
+		kv, _ = decode(key)
 		kv.Val = val
 		b.db.Create(kv)
 	}
@@ -50,8 +49,8 @@ func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
 
 func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
 	f := func() {
-		kv := &KV{}
-		b.db.First(kv, key)
+		kv, _ := decode(key)
+		b.db.First(kv)
 
 		if b.error() != nil {
 			return
@@ -60,7 +59,8 @@ func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
 		if bytes.Compare(kv.Val, oldVal) != 0 {
 			b.err = storage.ErrCASFailed
 		}
-		kv.InternalKey = key
+
+		kv, _ = decode(key)
 		kv.Val = newVal
 		b.db.Updates(kv)
 	}
@@ -76,8 +76,7 @@ func (b *batch) rollbackIfErr() {
 
 func (b *batch) Put(key []byte, val []byte, ttl int64) {
 	f := func() {
-		kv := &KV{}
-		kv.InternalKey = key
+		kv, _ := decode(key)
 		kv.Val = val
 		b.db.Create(kv)
 	}
@@ -87,7 +86,8 @@ func (b *batch) Put(key []byte, val []byte, ttl int64) {
 
 func (b *batch) Del(key []byte) {
 	f := func() {
-		b.db.Delete(&KV{InternalKey: key})
+		kv, _ := decode(key)
+		b.db.Delete(kv)
 	}
 
 	b.fs = append(b.fs, f)
@@ -95,7 +95,8 @@ func (b *batch) Del(key []byte) {
 
 func (b *batch) DelCurrent(it storage.Iter) {
 	f := func() {
-		b.db.Where("val = ?", it.Val()).Delete(&KV{InternalKey: it.Key()})
+		kv, _ := decode(it.Key())
+		b.db.Where("val = ?", it.Val()).Delete(kv)
 	}
 
 	b.fs = append(b.fs, f)

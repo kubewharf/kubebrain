@@ -15,15 +15,23 @@ type iter struct {
 	rows    *sql.Rows
 	current *KV
 
-	start []byte
-	end   []byte
-	limit int
+	start   []byte
+	end     []byte
+	startKV *KV
+	endKV   *KV
+	limit   int
 }
 
 func newIter(db *gorm.DB, start []byte, end []byte, limit int) *iter {
+
+	startKV, _ := decode(start)
+	endKV, _ := decode(end)
+
 	return &iter{
 		db:      db,
 		current: &KV{},
+		startKV: startKV,
+		endKV:   endKV,
 		start:   start,
 		end:     end,
 		limit:   limit,
@@ -32,23 +40,33 @@ func newIter(db *gorm.DB, start []byte, end []byte, limit int) *iter {
 
 func (i *iter) init(ctx context.Context) (err error) {
 	db := i.db.WithContext(ctx).
-		Model(&KV{}).
-		Where("internal_key <= ?", i.start).Where("internal_key >= ?", i.end)
+		Model(&KV{})
+
+	if bytes.Compare(i.start, i.end) > 0 {
+		db = db.
+			Where("key <= ?", i.startKV.Key).
+			Where("rev <= ?", i.startKV.Rev).
+			Where("key >= ?", i.endKV.Key).
+			Where("rev >= ?", i.endKV.Rev).
+			Order("key desc, rev desc")
+	} else {
+		db = db.
+			Where("key <= ?", i.endKV.Key).
+			Where("rev <= ?", i.endKV.Rev).
+			Where("key >= ?", i.startKV.Key).
+			Where("rev >= ?", i.startKV.Rev).
+			Order("key, rev")
+	}
 
 	if i.limit != 0 {
 		db = db.Limit(i.limit)
-	}
-	if bytes.Compare(i.start, i.end) < 0 {
-		db = db.Order("internal_key")
-	} else {
-		db = db.Order("internal_key desc")
 	}
 	i.rows, err = db.Rows()
 	return err
 }
 
 func (i *iter) Key() []byte {
-	return i.current.InternalKey
+	return encode(i.current)
 }
 
 func (i *iter) Val() []byte {
