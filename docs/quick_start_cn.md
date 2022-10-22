@@ -22,7 +22,7 @@ tiup playground --mode tikv-slim --kv 1 --pd 1
 ```
 
 
-## 编译与启动
+#### 编译与启动
 
 ```shell
 make tikv
@@ -31,6 +31,25 @@ make tikv
 多个KubeBrain共用一个tikv集群时，注意配置
 - `key-prefix`参数和apiserver对应的apiserver的`etcd-prefix`参数保持一致
 - `compatible-with-etcd`需要置为true，以开启从节点的支持txn和watch，对etcd功能的完全兼容
+
+### [实验性功能] 基于TiDB的高可用存储
+
+KubeBrain适配了[TiDB](https://github.com/pingcap/tidb) ，实现了基于分布式键值数据库的kubernetes元信息存储
+
+#### TiDB部署
+TiDB集群部署参考[TiUP](https://docs.pingcap.com/zh/tidb/stable/production-deployment-using-tiup) ，本地测试环境可以使用`tiup playground`
+```shell
+tiup playground
+```
+
+
+#### 编译与启动
+
+```shell
+make mysql
+./bin/kube-brain --key-prefix "/test" --port=3379 --peer-port=3380 --db-name "mysql"
+```
+
 
 ## APIServer
 ### 使用社区版的APIServer

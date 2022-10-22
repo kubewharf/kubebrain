@@ -12,39 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build tikv
-// +build tikv
+//go:build mysql
+// +build mysql
 
 package option
 
 import (
-	"fmt"
-
 	"github.com/spf13/pflag"
 
 	"github.com/kubewharf/kubebrain/pkg/storage"
-	storagetikv "github.com/kubewharf/kubebrain/pkg/storage/tikv"
+	storagemysql "github.com/kubewharf/kubebrain/pkg/storage/mysql"
 )
 
 type storageConfig struct {
-	pdAddrs []string
+	config storagemysql.Config
 }
 
 func newStorageConfig() *storageConfig {
-	return &storageConfig{}
+	return &storageConfig{
+		config: storagemysql.Config{
+			UserName: "root",
+			Password: "",
+			URL:      "127.0.0.1:4000",
+			DBName:   "kubebrain",
+		},
+	}
 }
 
 func (s *storageConfig) addFlag(fs *pflag.FlagSet) {
-	fs.StringSliceVar(&s.pdAddrs, "pd-addrs", s.pdAddrs, "addresses of TiKV PD servers")
+	fs.StringVar(&s.config.UserName, "db-username", s.config.UserName, "username of database")
+	fs.StringVar(&s.config.Password, "db-password", s.config.Password, "password of database")
+	fs.StringVar(&s.config.URL, "db-url", s.config.URL, "url of mysql")
+	fs.StringVar(&s.config.DBName, "db-name", s.config.DBName, "name of database")
 }
 
 func (s *storageConfig) validate() error {
-	if len(s.pdAddrs) == 0 {
-		return fmt.Errorf("invalid param --pd-addrs")
-	}
 	return nil
 }
 
 func (s *storageConfig) buildStorage() (storage.KvStorage, error) {
-	return storagetikv.NewKvStorage(s.pdAddrs)
+	return storagemysql.NewKvStorage(s.config)
 }
