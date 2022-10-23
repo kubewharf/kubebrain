@@ -3,7 +3,7 @@ module github.com/kubewharf/kubebrain
 go 1.14
 
 require (
-	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
+	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/dgraph-io/badger v1.6.2
 	github.com/evanphx/json-patch v0.5.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -22,7 +22,7 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/cast v1.3.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/tikv/client-go/v2 v2.0.1
@@ -44,6 +44,7 @@ require (
 	k8s.io/component-base v0.20.2
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kube-openapi v0.0.0-00010101000000-000000000000 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
 replace (

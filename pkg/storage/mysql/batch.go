@@ -1,10 +1,9 @@
 package mysql
 
 import (
-	"bytes"
 	"context"
-
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"k8s.io/klog/v2"
 
 	"github.com/kubewharf/kubebrain/pkg/storage"
@@ -27,45 +26,55 @@ func (b *batch) error() error {
 }
 
 func (b *batch) PutIfNotExist(key []byte, val []byte, ttl int64) {
-	idx := len(b.fs)
+	//idx := len(b.fs)
 	f := func() {
+		//kv, _ := decode(key)
+		//b.db.First(kv)
+		//
+		//if b.error() != nil {
+		//	return
+		//}
+		//
+		//if len(kv.Val) != 0 {
+		//	b.err = storage.NewErrConflict(idx, key, kv.Val)
+		//	return
+		//}
 		kv, _ := decode(key)
-		b.db.First(kv)
-
-		if b.error() != nil {
-			return
-		}
-
-		if len(kv.Val) != 0 {
-			b.err = storage.NewErrConflict(idx, key, kv.Val)
-			return
-		}
-		kv, _ = decode(key)
 		kv.Val = val
-		b.db.Create(kv)
+		b.db = b.db.Create(kv)
+		if b.db.RowsAffected == 0 {
+			klog.InfoS("conflict", "key", string(key))
+			b.err = storage.ErrCASFailed
+			//b.err = storage.NewErrConflict(idx, key, kv.Val)
+		}
 	}
 
 	b.fs = append(b.fs, f)
 }
 
 func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
-	idx := len(b.fs)
+	//idx := len(b.fs)
 	f := func() {
+		//kv, _ := decode(key)
+		//b.db.Where("rev = ?", kv.Rev).First(kv)
+		//
+		//if b.error() != nil {
+		//	return
+		//}
+		//klog.InfoS("cur", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
+		//if bytes.Compare(kv.Val, oldVal) != 0 {
+		//	b.err = storage.NewErrConflict(idx, key, kv.Val)
+		//	return
+		//}
+
 		kv, _ := decode(key)
-		b.db.Where("rev = ?", kv.Rev).First(kv)
-
-		if b.error() != nil {
-			return
-		}
-		klog.InfoS("cur", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
-		if bytes.Compare(kv.Val, oldVal) != 0 {
-			b.err = storage.NewErrConflict(idx, key, kv.Val)
-			return
-		}
-
-		kv, _ = decode(key)
 		kv.Val = newVal
-		b.db.Where("rev = ?", kv.Rev).Updates(kv)
+		b.db = b.db.Where("rev = ?", kv.Rev).Where("val = ?", oldVal).Updates(kv)
+		if b.db.RowsAffected == 0 {
+			b.err = storage.ErrCASFailed
+			//b.err = storage.NewErrConflict(idx, key, kv.Val)
+			return
+		}
 	}
 	b.fs = append(b.fs, f)
 }
@@ -78,29 +87,47 @@ func (b *batch) rollbackIfErr() {
 }
 
 func (b *batch) Put(key []byte, val []byte, ttl int64) {
+	//idx := len(b.fs)
 	f := func() {
 		kv, _ := decode(key)
 		kv.Val = val
 		klog.InfoS("put", "key", string(kv.UserKey), "val", string(kv.Val), "rev", kv.Rev)
-		b.db.Create(kv)
-	}
+		b.db = b.db.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Where("rev = ?", kv.Rev).Create(kv)
 
+		//if b.db.RowsAffected == 0 {
+		//	b.err = storage.ErrCASFailed
+		//	b.err = storage.NewErrConflict(idx, key, kv.Val)
+		//	return
+		//}
+	}
 	b.fs = append(b.fs, f)
 }
 
 func (b *batch) Del(key []byte) {
+	//idx := len(b.fs)
 	f := func() {
 		kv, _ := decode(key)
-		b.db.Delete(kv)
+		b.db = b.db.Where("rev = ?", kv.Rev).Delete(kv)
+		if b.db.RowsAffected == 0 {
+			b.err = storage.ErrCASFailed
+			//b.err = storage.NewErrConflict(idx, key, kv.Val)
+		}
 	}
 
 	b.fs = append(b.fs, f)
 }
 
 func (b *batch) DelCurrent(it storage.Iter) {
+	//idx := len(b.fs)
 	f := func() {
 		kv, _ := decode(it.Key())
-		b.db.Where("val = ?", it.Val()).Delete(kv)
+		b.db = b.db.Where("val = ?", it.Val()).Where("rev = ?", kv.Rev).Delete(kv)
+		if b.db.RowsAffected == 0 {
+			b.err = storage.ErrCASFailed
+			//b.err = storage.NewErrConflict(idx, it.Key(), kv.Val)
+		}
 	}
 
 	b.fs = append(b.fs, f)
@@ -116,12 +143,21 @@ func (b *batch) Commit(ctx context.Context) error {
 		f()
 
 		if b.error() != nil {
+			klog.Infof("batch %p txn rollback", b)
 			b.db.Rollback()
 			return b.error()
 		}
 	}
 
 	b.db.Commit()
+	if b.error() != nil {
+		klog.ErrorS(b.error(), "failed to commit")
+		return b.error()
+	}
 
-	return b.error()
+	//if len(b.fs) != int(b.db.RowsAffected) {
+	//	klog.InfoS("conflict", "expected", len(b.fs), "actual", b.db.RowsAffected)
+	//	return storage.NewErrConflict(-1, nil, nil)
+	//}
+	return nil
 }

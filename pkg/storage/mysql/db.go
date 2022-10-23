@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/mysql"
@@ -108,7 +109,7 @@ func (s *store) BeginBatchWrite() storage.BatchWrite {
 
 func (s *store) Del(ctx context.Context, key []byte) (err error) {
 	kv, _ := decode(key)
-	err = s.db.Delete(kv).Error
+	err = s.db.Where("rev = ?", kv.Rev).Delete(kv).Error
 	if err != nil {
 		return errors.Wrap(err, "failed to delete")
 	}
@@ -117,7 +118,7 @@ func (s *store) Del(ctx context.Context, key []byte) (err error) {
 
 func (s *store) DelCurrent(ctx context.Context, iter storage.Iter) (err error) {
 	kv, _ := decode(iter.Key())
-	err = s.db.Where("val = ?", iter.Val()).Delete(kv).Error
+	err = s.db.Where("val = ?", iter.Val()).Where("rev = ?", kv.Rev).Delete(kv).Error
 	if err != nil {
 		return errors.Wrap(err, "failed to delete")
 	}
@@ -147,6 +148,8 @@ func decode(internalKey []byte) (kv *KV, err error) {
 	kv.UserKey, kv.Rev, err = defaultCoder.Decode(internalKey)
 	if err != nil {
 		kv.UserKey = internalKey
+		// ! user MaxUint64 to avoid internal key be compacted
+		kv.Rev = math.MaxUint64
 	}
 	return kv, nil
 }
