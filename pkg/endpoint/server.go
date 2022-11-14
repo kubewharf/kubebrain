@@ -139,7 +139,11 @@ func runServers(ctx context.Context, mux cmux.CMux, servers []exposedServer) (er
 	defer cancel()
 	group, ctx := errgroup.WithContext(ctx)
 	for _, server := range servers {
-		runner := runSubServer(ctx, mux, server)
+
+		// ! NOTICE: `mux.Match` is not thread-safe, so it should be called serially.
+		lsn := mux.Match(server.matcher())
+
+		runner := runSubServer(ctx, lsn, server)
 		group.Go(func() (err error) {
 			// if any sub exposedServer exit, call `cancel` to make other sub exposedServer exit
 			defer cancel()
@@ -151,15 +155,13 @@ func runServers(ctx context.Context, mux cmux.CMux, servers []exposedServer) (er
 	return group.Wait()
 }
 
-func runSubServer(ctx context.Context, mux cmux.CMux, server exposedServer) func() error {
+func runSubServer(ctx context.Context, lsn net.Listener, server exposedServer) func() error {
 	return func() (err error) {
 
 		closed := make(chan error, 1)
-		muxLsn := mux.Match(server.matcher())
-
 		defer func() {
 			_ = server.close()
-			_ = muxLsn.Close()
+			_ = lsn.Close()
 			// wait until closed
 			<-closed
 		}()
@@ -169,9 +171,9 @@ func runSubServer(ctx context.Context, mux cmux.CMux, server exposedServer) func
 			defer util.Recover()
 
 			// run until server is closed or has an internal error
-			klog.InfoS("run server", "server", server.name(), "addr", muxLsn.Addr())
-			if err = server.serve(muxLsn); err != nil {
-				klog.ErrorS(err, "exposedServer stop", "name", server.name())
+			klog.InfoS("run server", "name", server.name(), "addr", lsn.Addr())
+			if err = server.serve(lsn); err != nil {
+				klog.ErrorS(err, "exposed server stop", "name", server.name(), "addr", lsn.Addr())
 				closed <- err
 			}
 			close(closed)
