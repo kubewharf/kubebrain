@@ -17,12 +17,29 @@ package endpoint
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 
 	"github.com/soheilhy/cmux"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/klog/v2"
 )
+
+type secureExposedServer struct {
+	exposedServer
+}
+
+func (s *secureExposedServer) name() string {
+	return fmt.Sprintf("secure %v", s.exposedServer.name())
+}
+
+func newSecureExposedServers(ss []exposedServer) []exposedServer {
+	ret := make([]exposedServer, 0, len(ss))
+	for _, s := range ss {
+		ret = append(ret, &secureExposedServer{exposedServer: s})
+	}
+	return ret
+}
 
 type secureServer struct {
 	internalServers []exposedServer
@@ -63,7 +80,7 @@ func (t *secureServer) serve(listener net.Listener) (err error) {
 
 	group.Go(func() error {
 		defer cancel()
-		return runServers(ctx, mux, t.internalServers)
+		return runServers(ctx, mux, newSecureExposedServers(t.internalServers))
 	})
 
 	return group.Wait()

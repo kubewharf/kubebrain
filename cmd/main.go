@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -40,11 +41,29 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
+
+	// launch a goroutine to check the exit signal
+	// - in most case, it's expected that components can exit successfully in given time.
+	// - in other case, some components may block and can not exit in given time,
+	//	 then we need the goroutine to force exit the process in given time.
+	go forceExitWhileGracefulExitTimeout(ctx)
+
 	if err := command.ExecuteContext(ctx); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 	return
+}
+
+const (
+	gracefulExitTimeout = 3 * time.Second
+)
+
+func forceExitWhileGracefulExitTimeout(ctx context.Context) {
+	<-ctx.Done()
+	time.Sleep(gracefulExitTimeout)
+	klog.Error("force exit due to graceful exit timeout")
+	os.Exit(1)
 }
 
 // NewKubeBrainCommand creates a *cobra.Command object with default parameters
