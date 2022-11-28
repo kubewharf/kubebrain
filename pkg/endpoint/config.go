@@ -111,7 +111,11 @@ func (c *Config) Validate() error {
 	}
 
 	if c.PeerPort == 0 || c.PeerPort == c.Port {
-		return fmt.Errorf("invalid peer port %d", c.Port)
+		return fmt.Errorf("invalid peer port %d", c.PeerPort)
+	}
+
+	if c.InfoPort != 0 && (c.InfoPort == c.Port || c.InfoPort == c.PeerPort) {
+		return fmt.Errorf("invalid info port %d", c.InfoPort)
 	}
 
 	klog.InfoS("validate client security config", c.ClientSecurityConfig.ToKvs()...)
