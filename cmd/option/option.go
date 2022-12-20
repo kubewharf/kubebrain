@@ -48,6 +48,8 @@ type KubeBrainOption struct {
 	storageConfig *storageConfig
 
 	EnableStorageMetrics bool
+
+	watchCacheSize int
 }
 
 func NewOptions() *KubeBrainOption {
@@ -59,9 +61,10 @@ func NewOptions() *KubeBrainOption {
 			PeerSecurityConfig:      &endpoint.SecurityConfig{},
 			EnableEtcdCompatibility: false,
 		},
-		Prefix:        "",
-		ClusterName:   "default",
-		storageConfig: newStorageConfig(),
+		Prefix:         "",
+		ClusterName:    "default",
+		storageConfig:  newStorageConfig(),
+		watchCacheSize: 200 * 1000,
 	}
 }
 
@@ -101,6 +104,7 @@ func (o *KubeBrainOption) AddFlags(fs *pflag.FlagSet) {
 
 	fs.BoolVar(&o.EnableStorageMetrics, "enable-storage-metrics", o.EnableStorageMetrics, "enable storage metrics.")
 	o.storageConfig.addFlag(fs)
+	fs.IntVar(&o.watchCacheSize, "watch-cache-size", o.watchCacheSize, "size of global watch cache")
 }
 
 // Validate checks the option before running
@@ -148,6 +152,7 @@ func (o *KubeBrainOption) Run(ctx context.Context) error {
 		Identity:                identity,
 		SkippedPrefixes:         o.SkippedPrefixes,
 		EnableEtcdCompatibility: o.epsConf.EnableEtcdCompatibility,
+		WatchCacheSize:          o.watchCacheSize,
 	}
 
 	if o.EnableStorageMetrics {

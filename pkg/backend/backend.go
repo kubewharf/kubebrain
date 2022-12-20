@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	historyCapacity      = 200000 // TODO config from start option
+	historyCapacity      = 200000
 	watchersChanCapacity = 100000
 	eventBatchSize       = 300
 )
@@ -136,10 +136,14 @@ type Config struct {
 
 	// SkippedPrefixes is the range that backend is not in charge of
 	SkippedPrefixes []string
+
+	// WatchCacheSize is the cache size of events
+	WatchCacheSize int
 }
 
 // NewBackend builds a new backend
 func NewBackend(kv storage.KvStorage, config Config, metricCli metrics.Metrics) Backend {
+	config.complete()
 	normalCoder := coder.NewNormalCoder()
 	electionConfig := election.Config{Prefix: config.Prefix, Identity: config.Identity, Timeout: unaryRpcTimeout}
 	b := &backend{
@@ -150,9 +154,9 @@ func NewBackend(kv storage.KvStorage, config Config, metricCli metrics.Metrics) 
 		election:              election.NewResourceLockManager(electionConfig, kv),
 		scanner:               scanner.NewScanner(kv, normalCoder, config.getScannerConfig(), metricCli),
 		config:                config,
-		capacity:              historyCapacity,
+		capacity:              config.WatchCacheSize,
 		watchEventsRingBuffer: make([]atomic.Value, watchersChanCapacity, watchersChanCapacity),
-		watchCache:            NewRing(historyCapacity),
+		watchCache:            NewRing(config.WatchCacheSize),
 		watchChan:             make(chan []*proto.Event, watchersChanCapacity),
 		watcherHub: &WatcherHub{
 			subs:      make(map[chan []*proto.Event]struct{}),

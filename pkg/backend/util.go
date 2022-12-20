@@ -42,12 +42,18 @@ const (
 	unaryRpcTimeout = 1 * time.Second
 )
 
-func (c Config) getScannerConfig() scanner.Config {
+func (c *Config) getScannerConfig() scanner.Config {
 	// todo: expose TTL as args
 	return scanner.Config{
 		CompactKey: getCompactKey(c.Prefix),
 		Tombstone:  tombStoneBytes,
 		TTL:        time.Second * time.Duration(eventsTTL),
+	}
+}
+
+func (c *Config) complete() {
+	if c.WatchCacheSize <= 0 {
+		c.WatchCacheSize = historyCapacity
 	}
 }
 
