@@ -104,10 +104,28 @@ func minUint64(a, b uint64) uint64 {
 
 type Key []byte
 
-func (k *Key) String() string {
-	return string(*k)
+func (k Key) String() string {
+	return string(k)
 }
 
 const (
 	klogLevel klog.Level = 10
 )
+
+func txnLog(verb string, key []byte, valSize int, rev uint64, respRev uint64, result bool, latency time.Duration, err error) {
+	if klog.V(klogLevel).Enabled() ||
+		!result ||
+		err != nil {
+		// log txn if
+		// 1. there is error or cas failed
+		// 2. flag `--v` is less than const `klogLevel`
+		klog.InfoS(verb,
+			"key", Key(key),
+			"valSize", valSize,
+			"rev", rev,
+			"respRev", respRev,
+			"result", result,
+			"latency", latency,
+			"err", err)
+	}
+}

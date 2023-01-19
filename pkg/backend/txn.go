@@ -33,12 +33,14 @@ import (
 func (b *backend) Create(ctx context.Context, put *proto.CreateRequest) (resp *proto.CreateResponse, err error) {
 	ts := time.Now()
 	defer func() {
-		klog.V(klogLevel).InfoS("create",
-			"key", string(put.GetKey()),
-			"valSize", len(put.GetValue()),
-			"result", resp.GetSucceeded(),
-			"respRev", resp.GetHeader().GetRevision(),
-			"latency", time.Since(ts))
+		txnLog("create",
+			put.GetKey(),
+			len(put.GetValue()),
+			0,
+			resp.GetHeader().GetRevision(),
+			resp.GetSucceeded(),
+			time.Since(ts),
+			err)
 	}()
 
 	revision, err := b.create(ctx, put.Key, put.Value)
@@ -77,12 +79,15 @@ func (b *backend) create(ctx context.Context, key []byte, value []byte) (revisio
 func (b *backend) Delete(ctx context.Context, r *proto.DeleteRequest) (resp *proto.DeleteResponse, err error) {
 	ts := time.Now()
 	defer func() {
-		klog.V(klogLevel).InfoS("delete",
-			"key", Key(r.GetKey()),
-			"rev", r.GetRevision(),
-			"result", resp.GetSucceeded(),
-			"respRev", resp.GetHeader().GetRevision(),
-			"latency", time.Since(ts))
+		txnLog("delete",
+			r.GetKey(),
+			0,
+			r.GetRevision(),
+			resp.GetHeader().GetRevision(),
+			resp.GetSucceeded(),
+			time.Since(ts),
+			err)
+
 	}()
 
 	rev, old, err := b.delete(ctx, r.Revision, r.Key)
@@ -180,13 +185,14 @@ func (b *backend) delete(ctx context.Context, oldRevision uint64, key []byte) (n
 func (b *backend) Update(ctx context.Context, r *proto.UpdateRequest) (resp *proto.UpdateResponse, err error) {
 	ts := time.Now()
 	defer func() {
-		klog.V(klogLevel).InfoS("update",
-			"key", Key(r.GetKv().GetKey()),
-			"valSize", len(r.GetKv().GetValue()),
-			"rev", r.GetKv().Revision,
-			"respRev", resp.GetHeader().GetRevision(),
-			"result", resp.GetSucceeded(),
-			"latency", time.Since(ts))
+		txnLog("update",
+			r.GetKv().GetKey(),
+			len(r.GetKv().GetValue()),
+			r.GetKv().Revision,
+			resp.GetHeader().GetRevision(),
+			resp.GetSucceeded(),
+			time.Since(ts),
+			err)
 	}()
 
 	var (
