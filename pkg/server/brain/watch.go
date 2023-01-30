@@ -15,6 +15,7 @@
 package brain
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -37,14 +38,23 @@ func (s *Server) Watch(r *proto.WatchRequest, server proto.Watch_WatchServer) er
 
 	start := time.Now()
 
-	ch, err := s.backend.Watch(server.Context(), string(r.Key), r.Revision)
+	ctx, cancel := context.WithCancel(server.Context())
+	defer cancel()
+
+	ch, err := s.backend.Watch(ctx, string(r.Key), r.Revision)
 	if err != nil {
 		s.emitMethodMetric(watchMetric, "watch-end", err, time.Since(start))
 		klog.ErrorS(err, "brain server watch backend failed", "key", string(r.Key), "revision", r.Revision)
 		return err
 	}
 	responseSize := 0
+	var sendErr error
 	for events := range ch {
+		if sendErr != nil {
+			// drain the channel to ensure producer could exit
+			continue
+		}
+
 		s.metricCli.EmitCounter("brain.watch.event", len(events))
 		watchResponse := &proto.WatchResponse{
 			Header: &proto.ResponseHeader{
@@ -53,11 +63,11 @@ func (s *Server) Watch(r *proto.WatchRequest, server proto.Watch_WatchServer) er
 			Events: events,
 		}
 		responseSize += watchResponse.Size()
-		err := server.Send(watchResponse)
-		if err != nil {
-			s.emitMethodMetric(watchMetric, "watch-send", err, 0)
-			klog.ErrorS(err, "send watch response to client", "key", string(r.Key), "end", string(r.End), "revision", r.Revision)
-			return err
+		sendErr = server.Send(watchResponse)
+		if sendErr != nil {
+			s.emitMethodMetric(watchMetric, "watch-send", sendErr, 0)
+			klog.ErrorS(sendErr, "send watch response to client", "key", string(r.Key), "end", string(r.End), "revision", r.Revision)
+			cancel()
 		}
 	}
 	s.emitMethodMetric(watchMetric, "watch-end", nil, time.Since(start))
