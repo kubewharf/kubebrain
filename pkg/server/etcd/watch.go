@@ -291,6 +291,9 @@ func (w *watcher) Watch(ctx context.Context, id int64, r *etcdserverpb.WatchCrea
 	var ch <-chan []*mvccpb.Event
 	var err error
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	if w.grpcServer.peers.IsLeader() {
 		ch, err = w.backend.Watch(ctx, string(r.Key), uint64(r.StartRevision))
 	} else {
@@ -303,7 +306,14 @@ func (w *watcher) Watch(ctx context.Context, id int64, r *etcdserverpb.WatchCrea
 		w.Cancel(id, err, true)
 		return
 	}
+
+	var sendErr error
 	for events := range ch {
+		if sendErr != nil {
+			// drain the channel to ensure producer could exit
+			continue
+		}
+
 		if len(events) == 0 {
 			continue
 		}
@@ -316,10 +326,11 @@ func (w *watcher) Watch(ctx context.Context, id int64, r *etcdserverpb.WatchCrea
 		}
 		w.metricCli.EmitGauge("watch.watch_stream.push", watchResponse.Header.Revision)
 		w.metricCli.EmitHistogram("watch.watch_stream.push.size", watchResponse.Size())
-		if err := w.watchServer.Send(watchResponse); err != nil {
+		if sendErr = w.watchServer.Send(watchResponse); sendErr != nil {
 			w.metricCli.EmitCounter("watch.watch_stream.push.err", 1)
-			klog.ErrorS(err, "[watch stream] watch send err, cancel", "watcher", w.id, "watch", id)
-			w.Cancel(id, err, false)
+			klog.ErrorS(sendErr, "[watch stream] watch send err, cancel", "watcher", w.id, "watch", id)
+			w.Cancel(id, sendErr, false)
+			cancel()
 			continue
 		}
 	}
