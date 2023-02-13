@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -42,22 +43,26 @@ func newBadgerStorage(t *testing.T, ast *assert.Assertions) storage.KvStorage {
 	return st
 }
 
+func getAuthPath(filename string) string {
+	return filepath.Join("../util/auth/testdata", filename)
+}
+
 func TestRunEndpoint(t *testing.T) {
 	ast := assert.New(t)
 	conf := Config{
 		Port:     2379,
 		PeerPort: 2380,
 		ClientSecurityConfig: &SecurityConfig{
-			CertFile:      "./testdata/server.crt",
-			KeyFile:       "./testdata/server.key",
-			CA:            "./testdata/ca.crt",
+			CertFile:      getAuthPath("server.crt"),
+			KeyFile:       getAuthPath("server.key"),
+			CA:            getAuthPath("ca.crt"),
 			ClientAuth:    true,
 			AllowInsecure: true,
 		},
 		PeerSecurityConfig: &SecurityConfig{
-			CertFile:      "./testdata/server.crt",
-			KeyFile:       "./testdata/server.key",
-			CA:            "./testdata/ca.crt",
+			CertFile:      getAuthPath("server.crt"),
+			KeyFile:       getAuthPath("server.key"),
+			CA:            getAuthPath("ca.crt"),
 			ClientAuth:    true,
 			AllowInsecure: true,
 		},
