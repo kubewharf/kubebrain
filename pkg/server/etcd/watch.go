@@ -17,6 +17,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -159,9 +160,7 @@ func (w *watcher) Start(c context.Context, r *etcdserverpb.WatchCreateRequest) {
 func (w *watcher) Cancel(id int64, err error, compact bool) {
 	klog.InfoS("watch cancel", "watcher", w.id, "watch", id, "err", err, "compact", compact)
 	var tags []metrics.T
-	if compact {
-		tags = append(tags, metrics.Tag("compact", "true"))
-	}
+	tags = append(tags, metrics.Tag("compact", strconv.FormatBool(compact)))
 	w.metricCli.EmitCounter("watch.cancel", 1, tags...)
 	w.Lock()
 	if c, ok := w.watches[id]; ok {
