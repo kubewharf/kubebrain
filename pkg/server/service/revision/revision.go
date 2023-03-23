@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/klog/v2"
-	
+
 	"github.com/kubewharf/kubebrain/pkg/metrics"
 	"github.com/kubewharf/kubebrain/pkg/server/service/leader"
 )
@@ -226,7 +226,7 @@ func (r *revisionSyncer) getRevisionFromLeader() (uint64, error) {
 	klog.V(10).InfoS("get revision", "from", url)
 	response, err := r.httpClient.Get(url)
 	r.metricCli.EmitHistogram("member.round_trip",
-		time.Now().Sub(startTime).Milliseconds(),
+		time.Since(startTime).Milliseconds(),
 		metrics.Tag("leader", leaderAddress))
 	if err != nil {
 		r.metricCli.EmitCounter("follower.get.revision.err", 1, metrics.Tag("leader", leaderAddress))

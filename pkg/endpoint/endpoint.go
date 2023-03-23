@@ -48,19 +48,19 @@ func NewEndpoint(b backend.Backend, m metrics.Metrics, config *Config) *Endpoint
 
 // Run start grpc and http server, and block until there is any error
 //
-// each port may start secure server and insecure server
-// ClientPort─┬─ Secure(TLS) ─┬─ GRPC
-//            │               └─ HTTP
-//            │
-//            └─  Insecure   ─┬─ GRPC
-//                            └─ HTTP
+//	each port may start secure server and insecure server
+//	ClientPort─┬─ Secure(TLS) ─┬─ GRPC
+//	           │               └─ HTTP
+//	           │
+//	           └─  Insecure   ─┬─ GRPC
+//	                           └─ HTTP
 //
-//  PeerPort ─┬─ Secure(TLS) ─┬─ GRPC
-//            │               └─ HTTP
-//            │
-//            └─  Insecure   ─┬─ GRPC
-//                            └─ HTTP
-//  InfoPort ───  Insecure   ─── HTTP
+//	PeerPort  ─┬─ Secure(TLS) ─┬─ GRPC
+//	           │               └─ HTTP
+//	           │
+//	           └─  Insecure   ─┬─ GRPC
+//	                           └─ HTTP
+//	InfoPort  ───  Insecure   ─── HTTP
 func (e *Endpoint) Run(ctx context.Context) (err error) {
 
 	e.server = server.NewServer(e.backend, e.metrics, e.config.getServerConfig())
