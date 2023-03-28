@@ -109,19 +109,19 @@ type BatchWrite interface {
 // Example:
 //
 //	iter := kvStorage.Iter(start, end, snapshotID, false)
-//  defer iter.Close()
-//  iterCtx := context.WithTimeout(ctx, timeout)
-// 	for {
-//      err := iter.Next(iterCtx)
-//      if err != nil {
-//          if err == io.EOF {
-//             // come to the end
-//          }
-//      }
-//      key, value := iter.Key(), iter.Val()
-//      // processing ...
-//   }
-//
+//	defer iter.Close()
+//	iterCtx := context.WithTimeout(ctx, timeout)
+//	for {
+//		err := iter.Next(iterCtx)
+//		if err != nil {
+//			if err == io.EOF {
+//				// come to the end
+//			}
+//			// unexpected error
+//		}
+//		 key, value := iter.Key(), iter.Val()
+//		// processing ...
+//	}
 type Iter interface {
 	// Key returns keys in buffer
 	Key() []byte
