@@ -1338,6 +1338,10 @@ func TestUncertainRewrite(t *testing.T) {
 		s.ast.Equal(int64(initRev)+6, int64(rev))
 		s.ast.NoError(err)
 
+		t.Log("compact before notifying to imitate conflict")
+		err = b.compact(s.ctx, initRev)
+		s.ast.NoError(err)
+
 		// 7
 		t.Log("imitate the uncertain case, there should be an async retry to write the same data again, expected there is an async retry")
 		b.notify(s.ctx, []byte(testKey), []byte(testVal), rev, initRev+4, false, proto.Event_DELETE, storage.ErrUncertainResult)
