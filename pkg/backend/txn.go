@@ -137,17 +137,24 @@ func (b *backend) Delete(ctx context.Context, r *proto.DeleteRequest) (resp *pro
 	return resp, nil
 }
 
+func (b *backend) mustDeal(prevRev uint64) (rev uint64) {
+	rev, _ = b.deal(prevRev)
+	return rev
+}
+
 func (b *backend) delete(ctx context.Context, oldRevision uint64, key []byte) (newRevision uint64, old KeyVal, err error) {
 	expectedRevision := oldRevision
-	newRevision, err = b.deal(oldRevision)
-	if err != nil {
-		return 0, KeyVal{}, err
-	}
 
 	// get the latest value
 	oldVal, modRevision, err := b.get(ctx, key, 0)
 	if err != nil {
-		return newRevision, KeyVal{}, err
+		getRev := b.mustDeal(oldRevision)
+		return getRev, KeyVal{}, err
+	}
+
+	newRevision, err = b.deal(oldRevision)
+	if err != nil {
+		return 0, KeyVal{}, err
 	}
 
 	old = KeyVal{Key: key, Revision: modRevision, Val: oldVal}
@@ -178,6 +185,7 @@ func (b *backend) delete(ctx context.Context, oldRevision uint64, key []byte) (n
 	batch.Put(objectKey, tombStoneBytes, 0)
 	err = batch.Commit(ctx)
 
+	// todo: need an internal retry if there is any conflict error?
 	return newRevision, old, err
 }
 
@@ -258,6 +266,12 @@ func (b *backend) update(ctx context.Context, oldRevision uint64, key []byte, va
 
 func (b *backend) notify(ctx context.Context,
 	key []byte, val []byte, revision, preRevision uint64, valid bool, eventType proto.Event_EventType, err error) {
+	if revision == 0 {
+		b.metricCli.EmitCounter("watch.event.buffer.invalid", 1)
+		// todo: panic or not ?
+		return
+	}
+
 	// todo: abstract as an individual component
 	watchEvent := &common.WatchEvent{
 		Revision:     revision,
