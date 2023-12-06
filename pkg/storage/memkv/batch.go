@@ -80,7 +80,7 @@ func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
 		return
 	}
 
-	if bytes.Compare(val, oldVal) != 0 {
+	if !bytes.Equal(val, oldVal) {
 		b.err = storage.NewErrConflict(b.opCount, key, oldVal)
 		//b.err = errors.Errorf("cas failed: key %s old val is %s but expect %s", key, string(elem.Value.([]byte)), oldVal)
 	}
@@ -123,7 +123,7 @@ func (b *batch) DelCurrent(it storage.Iter) {
 		return
 	}
 
-	if bytes.Compare(b.get(it.Key()), it.Val()) != 0 {
+	if !bytes.Equal(b.get(it.Key()), it.Val()) {
 		b.err = storage.ErrCASFailed
 	}
 

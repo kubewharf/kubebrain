@@ -52,7 +52,6 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
-	return
 }
 
 const (

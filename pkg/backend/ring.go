@@ -30,7 +30,7 @@ type Ring struct {
 
 func NewRing(l int) *Ring {
 	return &Ring{
-		arr: make([]*proto.Event, l, l),
+		arr: make([]*proto.Event, l),
 		l:   l,
 	}
 }

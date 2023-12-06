@@ -173,7 +173,7 @@ func (sc *SecurityConfig) isInsecure() bool {
 	return sc.CertFile == "" &&
 		sc.KeyFile == "" &&
 		sc.CA == "" &&
-		sc.ClientAuth == false
+		!sc.ClientAuth
 }
 
 func (sc *SecurityConfig) init() (err error) {

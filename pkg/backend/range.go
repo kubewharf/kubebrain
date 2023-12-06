@@ -46,7 +46,7 @@ func (b *backend) Get(ctx context.Context, r *proto.GetRequest) (resp *proto.Get
 	requireRev := r.GetRevision()
 
 	val, modRev, err := b.get(ctx, r.Key, requireRev)
-	if err == storage.ErrKeyNotFound {
+	if errors.Is(err, storage.ErrKeyNotFound) {
 		return &proto.GetResponse{
 			Header: responseHeader(curRev),
 		}, nil
@@ -79,7 +79,7 @@ func (b *backend) getLatestInternalVal(ctx context.Context, key []byte) (val []b
 
 func (b *backend) get(ctx context.Context, key []byte, revision uint64) (val []byte, modRevision uint64, err error) {
 	val, modRevision, err = b.getInternalVal(ctx, key, revision)
-	if bytes.Compare(val, tombStoneBytes) == 0 {
+	if bytes.Equal(val, tombStoneBytes) {
 		return nil, modRevision, storage.ErrKeyNotFound
 	}
 	return val, modRevision, err
@@ -107,7 +107,7 @@ func (b *backend) getInternalVal(ctx context.Context, key []byte, revision uint6
 	}
 
 	userKey, modRev, err := b.coder.Decode(iter.Key())
-	if modRev == 0 || bytes.Compare(userKey, key) != 0 {
+	if modRev == 0 || !bytes.Equal(userKey, key) {
 		// it's marked by deleting
 		return nil, modRev, storage.ErrKeyNotFound
 	}
