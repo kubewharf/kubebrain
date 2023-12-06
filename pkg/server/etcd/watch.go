@@ -221,7 +221,7 @@ func (w *watcher) List(ctx context.Context, id int64, r *etcdserverpb.WatchCreat
 		revision := r.StartRevision * -1
 		// range stream eof, tell client range ends
 		// if has err, CancelReason is not nil
-		if watchResponse.Canceled == true {
+		if watchResponse.Canceled {
 			klog.InfoS("receive cancel message", "watcher", w.id, "watch", id, "key", r.Key, "end", r.RangeEnd, r.StartRevision*-1)
 			// indicates eof
 			revision = -1
@@ -340,8 +340,5 @@ func (w *watcher) Watch(ctx context.Context, id int64, r *etcdserverpb.WatchCrea
 
 func isPureWatchRequest(r *etcdserverpb.WatchCreateRequest) bool {
 	// if starts with /, it is a normal watch request, not a range stream request
-	if strings.HasPrefix(string(r.Key), "/") {
-		return true
-	}
-	return false
+	return strings.HasPrefix(string(r.Key), "/")
 }

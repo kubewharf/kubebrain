@@ -155,7 +155,7 @@ func NewBackend(kv storage.KvStorage, config Config, metricCli metrics.Metrics) 
 		scanner:               scanner.NewScanner(kv, normalCoder, config.getScannerConfig(), metricCli),
 		config:                config,
 		capacity:              config.WatchCacheSize,
-		watchEventsRingBuffer: make([]atomic.Value, watchersChanCapacity, watchersChanCapacity),
+		watchEventsRingBuffer: make([]atomic.Value, watchersChanCapacity),
 		watchCache:            NewRing(config.WatchCacheSize),
 		watchChan:             make(chan []*proto.Event, watchersChanCapacity),
 		watcherHub: &WatcherHub{

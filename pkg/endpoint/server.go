@@ -127,7 +127,6 @@ func (gs *rootServer) run(ctx context.Context) (err error) {
 		klog.InfoS("root server start to listen", "port", gs.port)
 		err = mux.Serve()
 		klog.ErrorS(err, "root server shutdown cause by temporary network error", "port", gs.port)
-		return
 	}()
 
 	return runServers(ctx, mux, gs.services)

@@ -222,7 +222,7 @@ func (a *asyncFifoRetryImpl) retry(ctx context.Context) (breakLoop bool) {
 func (a *asyncFifoRetryImpl) overwrite(ctx context.Context, key []byte, prevOpRev uint64) (rev uint64, err error) {
 	val, modRev, err := a.getter(ctx, key)
 	if err != nil {
-		if err == storage.ErrKeyNotFound {
+		if errors.Is(err, storage.ErrKeyNotFound) {
 			return 0, nil
 		}
 		return 0, err
@@ -250,7 +250,7 @@ func (a *asyncFifoRetryImpl) overwrite(ctx context.Context, key []byte, prevOpRe
 	revBytes := make([]byte, 8, 9)
 	binary.BigEndian.PutUint64(revBytes, rev)
 
-	if bytes.Compare(val, a.config.Tombstone) == 0 {
+	if bytes.Equal(val, a.config.Tombstone) {
 		// append delete flag after revision bytes
 		revBytes = append(revBytes, 0)
 		prevRevBytes = append(prevRevBytes, 0)
