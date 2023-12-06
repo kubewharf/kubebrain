@@ -145,7 +145,6 @@ func (s *server) electionHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	respBytes, _ := json.Marshal(info)
 	w.Write(respBytes)
-	return
 }
 
 func (s *server) revisionHandler(w http.ResponseWriter, req *http.Request) {

@@ -82,7 +82,6 @@ func (it *iter) init() {
 			elem = elem.Prev()
 		}
 	}
-	return
 }
 
 func (it *iter) inRange(elem *skiplist.Element) bool {

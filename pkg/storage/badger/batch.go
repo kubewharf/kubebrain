@@ -63,14 +63,14 @@ func (b *batch) CAS(key []byte, newVal []byte, oldVal []byte, ttl int64) {
 	f := func() error {
 		item, err := b.txn.Get(key)
 		if err != nil {
-			if err == badger.ErrKeyNotFound {
+			if errors.Is(err, badger.ErrKeyNotFound) {
 				return storage.NewErrConflict(idx, key, nil)
 			}
 			return err
 		}
 
 		err = item.Value(func(val []byte) error {
-			if bytes.Compare(oldVal, val) != 0 {
+			if !bytes.Equal(oldVal, val) {
 				return storage.NewErrConflict(idx, key, val)
 			}
 			return nil

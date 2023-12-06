@@ -51,7 +51,7 @@ func (e *etcdProxy) EtcdProxyEnabled() bool {
 
 // defaultCallOption is a copy of etcd client default call option
 var defaultCallOption = []grpc.CallOption{
-	grpc.FailFast(false),
+	grpc.WaitForReady(false),
 	grpc.MaxCallSendMsgSize(2 * 1024 * 1024),
 	grpc.MaxCallRecvMsgSize(math.MaxInt32),
 }

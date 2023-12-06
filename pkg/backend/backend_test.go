@@ -379,7 +379,6 @@ func (ct *createTestcase) run(t *testing.T, s suite, output <-chan []*proto.Even
 			return
 		}
 		ast.Equal(0, len(output), expectNoEvent)
-		return
 	})
 
 }
@@ -541,9 +540,7 @@ func sortKvs(kvs []*proto.KeyValue) []*proto.KeyValue {
 
 func extractPartitions(resp *proto.ListPartitionResponse) [][]byte {
 	ret := make([][]byte, len(resp.PartitionKeys))
-	for idx, kv := range resp.PartitionKeys {
-		ret[idx] = kv
-	}
+	copy(ret, resp.PartitionKeys)
 	return ret
 }
 
