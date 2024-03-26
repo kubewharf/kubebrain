@@ -475,6 +475,16 @@ func (w *worker) run(ctx context.Context, receiver resultReceiver) (int, error) 
 		}
 		// delete revision with deletion flag
 		if w.compact && curRevision == 0 && len(value) == revisionValueLengthWithDeletionFlag {
+
+			// for revision key, skip gc if revision parsed from value is larger than given revision
+			// to avoid conflict with retrying for uncertain DELETE operation
+			objRev := binary.BigEndian.Uint64(value[0:8])
+			if objRev > w.revision {
+				klog.InfoS("skip gc revision key", "key", string(curUserKey), "revision", objRev,
+					"gcRev", w.revision)
+				continue
+			}
+
 			klog.InfoS("compact index key", "key", curUserKey, "rev", curRevision, "val", binary.BigEndian.Uint64(value[0:8]), "len", len(value))
 			// cas with value to prevent conflict
 			w.compactCurrent(it, curUserKey, curRevision)
