@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/kubewharf/kubebrain/pkg/backend/coder"
-	storage "github.com/kubewharf/kubebrain/pkg/storage"
+	"github.com/kubewharf/kubebrain/pkg/storage"
 )
 
 // naiveCreator is a LeaseController use ttl as lease id and implement gc based on ttl feature provided by kv storage
@@ -43,8 +43,6 @@ func uint64ToBytes(n uint64) []byte {
 	binary.BigEndian.PutUint64(buf, n)
 	return buf
 }
-
-const RevisionValueLengthWithDeletionFlag = 9
 
 // Create implements Creator interface
 func (l *naiveCreator) Create(ctx context.Context, key []byte, value []byte, revision uint64) (err error) {
@@ -77,12 +75,13 @@ func (l *naiveCreator) CreateWithTTL(ctx context.Context, key []byte, val []byte
 			}
 
 			// concurrent create and delete
-			if len(oldRev) == RevisionValueLengthWithDeletionFlag {
-				preRevision := binary.BigEndian.Uint64(oldRev[0:8])
-				if preRevision < revision {
-					// retry
-					return l.update(ctx, revisionKey, objectKey, val, revisionBytes, oldRev, ttl)
-				}
+			prevRevision, isTombstone, parseErr := coder.ParseRevision(oldRev)
+			if parseErr != nil {
+				return parseErr
+			}
+
+			if isTombstone && prevRevision < revision {
+				return l.update(ctx, revisionKey, objectKey, val, revisionBytes, oldRev, ttl)
 			}
 			return storage.ErrCASFailed
 		}
