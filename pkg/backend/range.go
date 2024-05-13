@@ -79,7 +79,8 @@ func (b *backend) getLatestInternalVal(ctx context.Context, key []byte) (val []b
 
 // get returns the user-visible value and the revision it's modified with.
 // NOTICE: return storage.ErrKeyNotFound if the value is not exist or is a tombstone.
-//         modRevision maybe non-zero even if there is a storage.ErrKeyNotFound.
+//
+//	modRevision maybe non-zero even if there is a storage.ErrKeyNotFound.
 func (b *backend) get(ctx context.Context, key []byte, revision uint64) (val []byte, modRevision uint64, err error) {
 	val, modRevision, err = b.getInternalVal(ctx, key, revision)
 	if bytes.Compare(val, tombStoneBytes) == 0 {
