@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
@@ -241,7 +240,7 @@ func (r *revisionSyncer) getRevisionFromLeader() (uint64, error) {
 		return 0, fmt.Errorf("status code from leader %s is %d, msg is %s", leaderAddress, response.StatusCode, msg)
 	}
 
-	responseBody, err := ioutil.ReadAll(response.Body)
+	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return 0, err
 	}

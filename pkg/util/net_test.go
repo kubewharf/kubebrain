@@ -16,7 +16,7 @@ package util
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -119,7 +119,7 @@ func testGetHostAndTestConn(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	got, _ := ioutil.ReadAll(resp.Body)
+	got, _ := io.ReadAll(resp.Body)
 	t.Log("got", string(got))
 	ast.Equal(msg, got)
 	_ = svr.Close()

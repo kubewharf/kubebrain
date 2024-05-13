@@ -17,7 +17,7 @@ package auth
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
@@ -36,7 +36,7 @@ func GetTLSConfig(certFile, keyFile, ca string) (tlsConfig *tls.Config, err erro
 
 	// load ca file
 	certPool := x509.NewCertPool()
-	caFileBytes, err := ioutil.ReadFile(ca)
+	caFileBytes, err := os.ReadFile(ca)
 	if err != nil {
 		klog.ErrorS(err, "can not load ca cert", "ca", ca)
 		return nil, errors.Wrapf(err, "can not load ca cert")

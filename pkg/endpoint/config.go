@@ -18,7 +18,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"sync"
 
@@ -200,7 +200,7 @@ func (sc *SecurityConfig) init() (err error) {
 		// load ca file
 		if sc.CA != "" {
 			certPool := x509.NewCertPool()
-			caFileBytes, err := ioutil.ReadFile(sc.CA)
+			caFileBytes, err := os.ReadFile(sc.CA)
 			if err != nil {
 				klog.ErrorS(err, "can not load ca cert", "ca", sc.CA)
 				sc.err = errors.Wrapf(err, "can not load ca cert")
